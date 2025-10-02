@@ -1,0 +1,987 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f7f6;
+    /*display: flex;*/
+    max-width: none; 
+}
+.hidden {
+            display: none !important;
+        }
+
+nav::-webkit-scrollbar {
+    display: none;
+}
+
+
+nav {
+    width: 250px; /* Slightly wider nav */
+    background-color: #0051a9; /* Primary blue color */
+    color: white;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Subtle shadow */
+    display: flex;
+    flex-direction: column;
+    border-radius: 0 10px 10px 0; /* Rounded right corners */
+    box-sizing: border-box; /* Include padding in width */
+    position: fixed;
+    height: 100%;
+    position: fixed; /* La mantiene fija */
+    overflow-y: auto;
+    scrollbar-width: none;
+
+}
+
+nav header img {
+    max-width: 100%; /* Ensure image fits */
+    height: auto;
+    border-radius: 8px; /* Slightly rounded image corners */
+}
+
+nav h2 {
+    color: #fff;
+    font-size: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+main {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    margin-left: 250px; /* El mismo ancho que la barra de navegación */
+
+}
+
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+}
+
+header img {
+    max-width: 180px;
+    display: block;
+    margin-bottom: 20px;
+}
+
+input,
+select,
+button {
+   
+    margin: 10px 0;
+    padding: 8px;
+}
+
+.output {
+    background: #dddcdc;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* Allows the list to take available space */
+}
+
+nav ul li {
+    position: relative; /* For dropdown menu positioning */
+}
+
+nav ul li a,
+nav ul li div.dropdown-toggle {
+    display: flex;
+    justify-content: space-between; /* <-- AÑADE: Separa el texto y la flecha */
+    align-items: center; /* <-- AÑADE: Centra verticalmente */
+    color: white;
+    text-decoration: none;
+    margin: 5px 0px;
+    padding: 10px 15px;
+    border-radius: 5px; /* Rounded buttons/links */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+    cursor: pointer;
+}
+
+/* AÑADIR: Estilos para la flecha desplegable */
+nav ul li div.dropdown-toggle::after {
+    content: '▼'; /* El carácter de la flecha */
+    font-size: 0.7em; /* Tamaño de la flecha */
+    margin-left: 10px; /* Espacio entre el texto y la flecha */
+    transition: transform 0.3s ease; /* Transición para la rotación */
+    transform: rotate(0deg); /* Estado inicial */
+}
+
+nav ul li:hover div.dropdown-toggle::after {
+    transform: rotate(180deg); /* Rota la flecha al abrir el menú */
+}
+
+nav ul li a:hover,
+nav ul li div.dropdown-toggle:hover {
+    background-color: #003b79; /* Darker blue on hover */
+    text-decoration: none; /* Remove underline on hover for cleaner look */
+}
+
+
+.dropdown-menu {
+    /* Ocultar el menú inicialmente, pero preparado para animar */
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden; /* Importante para que el contenido no se vea cuando está colapsado */
+    visibility: hidden; /* Todavía oculto al principio */
+    
+    /* Estilos básicos del menú */
+    background-color: #003a6d;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+
+    
+    width: 100%;
+    text-align: left;
+    border-radius: 5px;
+    padding: 0; /* Inicialmente sin padding para la animación */
+    
+    /* Transición para los efectos deseados */
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, padding 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    
+    /* Para el efecto de deslizamiento inicial si lo deseas, aunque max-height lo gestiona */
+    /* transform: translateY(-10px); */
+}
+
+.dropdown-menu a {
+    padding: 8px 20px;
+    display: block;
+    color: white;
+    text-decoration: none;
+}
+
+.dropdown-menu a:hover {
+    background-color: #002441;
+    text-decoration: none;
+}
+
+/* Mostrar el menú desplegable al pasar el cursor sobre el LI padre */
+nav ul li:hover > .dropdown-menu {
+    /* Mostrar el menú y permitir la animación */
+    visibility: visible;
+    opacity: 1;
+    max-height: 700px; /* Ajusta este valor si tu menú tiene más elementos */
+    padding:  0; /* Añade el padding final */
+    /* transform: translateY(0); */ /* Si usaste transform, esto lo resetearía a la posición normal */
+}
+nav ul li.dropdown {
+    position: relative;
+}
+
+#tablaDatos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#tablaDatos th,
+#tablaDatos td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+
+#tabla-lockers th,
+#tabla-lockers td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#tabla-lockers th {
+    background-color: #f2f2f2;
+}
+
+#tabla-gambetas {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#tabla-gambetas th,
+#tabla-gambetas td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#tabla-gambetas th {
+    background-color: #f2f2f2;
+}
+
+#tablaInventario {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#tablaInventario th,
+#tablaInventario td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+
+#tablaInventario tfoot td {
+    font-weight: bold;
+}
+
+.disponible {
+    color: green;
+    font-weight: bold;
+}
+
+.no-disponible {
+    color: red;
+    font-weight: bold;
+}
+
+.bajo-stock {
+    color: orange;
+    font-weight: bold;
+}
+
+.sobre-stock {
+    color: blue;
+    font-weight: bold;
+}
+
+
+/* En static/style.css */
+input[type="text"],
+input[type="number"],
+select {
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Incluye padding y border en el ancho/alto */
+}
+
+/* Anchos específicos */
+#fuente_material {
+    width: 180px; /* Ancho fijo para el select */
+}
+
+#material {
+    width: 150px;
+}
+
+#proveedor {
+    width: 180px; /* Un poco más de 10 caracteres visuales */
+}
+
+#longitudBarra,
+#pesoBarra,
+#longitudPieza,
+#cantidadLaton {
+    width: 100px; /* Ancho para campos numéricos */
+}
+
+#numeroParte {
+    width: 180px; /* Ancho para número de parte */
+}
+
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 25px;
+}
+.form-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow */
+}
+.form-section label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+    color: #555; /* Slightly softer label color */
+
+}
+.form-section input[type="text"],
+.form-section input[type="number"],
+.form-section select{ 
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Incluye padding y border en el ancho */
+}
+.form-buttons {
+    grid-column: 1 / -1; /* Ocupa todas las columnas */
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.form-buttons button {
+    padding: 10px 20px;
+    margin: 7px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+.form-buttons button:hover {
+    background-color: #45a049;
+}
+.search-section {
+    margin-bottom: 25px;
+    text-align: center;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.search-section input {
+    padding: 10px;
+    width: 80%;
+    max-width: 400px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 8px; /* Rounded table corners */
+    overflow: hidden; /* Ensures rounded corners apply to content */
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+th {
+    background-color: #006de1;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+
+.accion-btn {
+    padding: 6px 10px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+.accion-btn.cancel,
+.accion-btn.cancel-btn {
+    background-color: #666;
+}
+
+.accion-btn.cancel:hover,
+.accion-btn.cancel-btn:hover {
+    background-color:#444;
+}
+
+.accion-btn.confirm,
+.accion-btn.confirm-btn{
+    background-color: #28a745;
+}
+.accion-btn.confirm:hover,
+.accion-btn.confirm-btn:hover{
+    background-color: #218838;
+}
+
+.accion-btn.edit,
+.accion-btn.edit-btn { /* Combined for consistency */
+            background-color: #ffc107; /*color yellow for edit */
+}
+.accion-btn.edit:hover,
+.accion-btn.edit-btn:hover {
+            background-color: #e0a800;
+}
+.accion-btn.delete,
+.accion-btn.delete-btn { /* Combined for consistency */
+    background-color: #dc3545; /* Red for delete */
+}
+.accion-btn.delete:hover,
+.accion-btn.delete-btn:hover {
+    background-color: #c82333;
+}
+.accion-btn.code,
+.accion-btn.code-btn {
+    background-color: #444;
+}
+.accion-btn.code:hover,
+.accion-btn.code-btn:hover {
+    background-color: #333;
+}
+.accion-btn.imprimir {
+            background-color: #20c997;
+            color: white;
+        }
+.accion-btn.imprimir:hover {
+            background-color: #1a9e7f;
+}
+
+ .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001; /* Higher than modal */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: white;
+            font-size: 15px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeIn 0.3s forwards, fadeOut 0.5s 4.5s forwards; /* Fade in, then fade out after 4.5s (total 5s) */
+            min-width: 250px;
+            max-width: 350px;
+            word-wrap: break-word;
+        }
+        .toast.success {
+            background-color: #28a745; /* Green */
+        }
+        .toast.error {
+            background-color: #dc3545; /* Red */
+        }
+        .toast.info {
+            background-color: #007bff; /* Blue */
+        }
+
+/* Estilos para el TOAST (showMessage) */
+
+
+/* Estilos para el MODAL (showErrorModal, deleteConfirmModal) */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 1000; /* Mayor que el toast si es necesario */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4); /* Fondo semi-transparente */
+    justify-content: center; /* Centrar contenido con flexbox */
+    align-items: center; /* Centrar contenido con flexbox */
+    /* Animación opcional */
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+    display: flex; /* Usar flexbox cuando está visible */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Para centrado cuando display: block */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* O un tamaño fijo como 400px */
+    max-width: 500px; /* Limitar el ancho máximo */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
+    text-align: center;
+    transform: translateY(-50px);
+    z-index: 1001;
+    transition: transform 0.3s ease-in-out;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+.close-button {
+    color: #d50000;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    z-index: 1002;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: rgb(131, 3, 3);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media print {
+            body * {
+                visibility: hidden;
+            }
+            #printContent, #printContent * {
+                visibility: visible;
+            }
+            #printContent {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                text-align: center;
+                padding: 20mm; /* Adjust as needed for label size */
+                box-sizing: border-box;
+            }
+            #printContent h1 {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            #printContent p {
+                font-size: 16px;
+                margin: 5px 0;
+            }
+            #barcodePrint {
+                margin-top: 20px;
+                display: block; /* Ensure barcode is centered */
+            }
+        }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column; /* Stack nav and main vertically */
+    }
+    nav {
+        width: 100%; /* Full width nav */
+        border-radius: 0; /* Remove rounded corners on small screens */
+        padding: 15px;
+    }
+    nav ul {
+        display: flex;
+        flex-wrap: wrap; /* Allow menu items to wrap */
+        justify-content: center;
+    }
+    nav ul li {
+        margin: 5px;
+    }
+    nav ul li a,
+    nav ul li .dropdown-toggle {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+    .dropdown-menu {
+        position: static; /* Make dropdown flow in document */
+        width: 100%;
+        box-shadow: none;
+        background-color: #004a8c; /* Keep background consistent */
+    }
+    main {
+        margin: 15px;
+        padding: 20px;
+    }
+    main h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+    .form-section {
+        grid-template-columns: 1fr; /* Single column for forms on small screens */
+    }
+    table, th, td {
+        font-size: 0.85em; /* Shrink table text */
+        padding: 8px; /* Reduce table padding */
+    }
+    .accion-btn {
+        padding: 4px 8px;
+        font-size: 0.8em;
+        margin-right: 2px;
+    }
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-danger{
+    background-color: rgb(234, 0, 0);
+    color: white;
+}
+
+.btn-danger:hover{
+    background-color: rgb(181, 2, 2);
+    transform: translateY(-2px);
+}
+
+.profile-menu-container-top-right {
+    position: fixed; /* Se mantiene visible al hacer scroll */
+    bottom: 20px; /* Distancia del borde superior */
+    right: 20px; /* Distancia del borde derecho */
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    width: 180px; /* Ancho fijo para el menú */
+}
+
+.profile-toggle {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #2c3e50; /* Color oscuro similar al nav/header */
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    font-weight: bold;
+    font-size: 0.9em;
+    user-select: none;
+
+}
+
+.user-svg-icon {
+    width: 20px; /* Tamaño del ícono, pequeño y decente */
+    height: 20px;
+    min-width: 20px; /* Asegura que no se haga más pequeño */
+    margin-right: 8px; /* Espaciado entre el ícono y el nombre de usuario */
+}
+
+/* Contenedor del nombre de usuario y flecha */
+.profile-toggle-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.arrow-icon {
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
+    line-height: 1; /* Para centrar mejor el triángulo */
+}
+
+/* Gira la flecha cuando el menú está abierto */
+.profile-menu-container-top-right.active .arrow-icon {
+    transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+    position: absolute; /* Posicionado relativo al contenedor padre */
+    right: 0; /* Alinea a la derecha del contenedor */
+    bottom: 100%; /* Justo debajo del botón de toggle */
+    width: 100%;
+    background-color: #34495e; 
+    padding: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-radius: 5px 5px 0 0;
+    max-height: 0; /* Estado inicial oculto */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+/* Estilo para el texto dentro del dropdown */
+.profile-dropdown-menu p {
+    color: #ecf0f1;
+    margin: 0;
+    padding: 10px 12px 5px;
+    font-size: 0.9em;
+}
+
+/* Estilo para el botón Cerrar Sesión */
+.profile-dropdown-menu .btn-danger {
+    display: block;
+    width: calc(100% - 80px); /* Ancho completo menos el padding lateral */
+    margin: 5px 32px 10px; /* Margen para centrar el botón */
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9em;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+/* Estado de Muestra: max-height para el efecto de deslizado */
+.profile-menu-container-top-right.active .profile-dropdown-menu {
+    max-height: 200px; /* Altura suficiente para mostrar el contenido */
+}
+
+
+@media (max-width: 480px) {
+    nav ul {
+        flex-direction: column; /* Stack menu items vertically */
+        align-items: center;
+    }
+    nav ul li {
+        width: 90%; /* Almost full width for menu items */
+    }
+    .dropdown-menu {
+        width: 100%;
+    }
+    .summary-card,
+    .form-section,
+    .search-section {
+        padding: 15px; /* Reduce padding for smaller screens */
+    }
+    main h1 {
+        font-size: 1.5em;
+    }
+    h2 {
+        font-size: 1.3em;
+    }
+    .search-section input {
+        width: 95%; /* Make search input wider */
+    }
+}
+
+
+        /* ... (tus estilos generales actuales aquí) ... */
+
+        /* --- Estilos Específicos para Teléfonos Móviles (hasta 600px de ancho) --- */
+@media only screen and (max-width: 600px) {
+    /* 1. Resetear el cuerpo y eliminar el margen fijo */
+    body {
+        margin: 0; /* Elimina los 5mm de margen del body para aprovechar todo el espacio */
+        overflow-x: hidden; /* Previene scroll horizontal si algo se desborda */
+    }
+
+    /* 2. Contenedor principal: APILAR los elementos */
+    .main-layout-container {
+        display: flex;
+        /* CAMBIO CLAVE: Coloca la barra de navegación ARRIBA del contenido principal */
+        flex-direction: column; 
+        /* La altura ya no es 100vh porque el contenido y la nav están apilados, y el cuerpo debe poder hacer scroll */
+        height: auto; 
+        overflow: auto; 
+    }
+
+    /* 3. Ajustes para la barra de navegación principal (TOP BAR) */
+    nav {
+        /* CAMBIO CLAVE: Usa todo el ancho disponible */
+        width: 100%; 
+        flex: 0 0 auto;
+        padding: 5px 10px;
+        /* CAMBIO: Hazla una barra horizontal compacta para el móvil */
+        flex-direction: row; 
+        justify-content: space-between; /* Mueve el logo/título a un lado y los enlaces al otro */
+        align-items: center; 
+        gap: 10px;
+        position: sticky; /* Opcional: para que la barra se quede arriba al hacer scroll */
+        top: 0;
+        z-index: 100; /* Asegura que la barra esté por encima de otros elementos */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow-x: auto; /* Si la barra es demasiado ancha, permite scroll horizontal SÓLO en la nav */
+        overflow-y: hidden;
+        height: auto;
+    }
+
+    /* 4. Contenedor del logo/título: Compactar a la izquierda */
+    nav header {
+        display: flex;
+        flex-direction: row; /* Coloca logo y título uno al lado del otro */
+        align-items: center;
+        width: auto;
+        margin-bottom: 0;
+        gap: 5px;
+    }
+
+    /* 5. Imagen del logo: Muy pequeña */
+    nav header img {
+        margin-bottom: 0;
+    }
+
+    /* 6. Título: Eliminar o reducir fuertemente */
+    nav h2 {
+        /* Opción 1: OCULTAR el título largo para ahorrar espacio */
+        display: none; 
+        /* Opción 2: Si quieres mantenerlo, usa este estilo, pero el "display: none" es mejor para móviles */
+        /* font-size: 0.7em; margin: 0; white-space: nowrap; */
+    }
+
+    /* 7. Elementos de la lista de navegación (UL): Horizontal y al lado del logo */
+    nav ul {
+        /* CAMBIO CLAVE: Muestra los enlaces horizontalmente */
+        flex-direction: row; 
+        justify-content: flex-end; /* Alinea los enlaces a la derecha */
+        flex: 1; /* Permite que el UL ocupe el espacio restante */
+        width: auto;
+        padding: 0;
+        list-style: none;
+        margin: 0;
+    }
+
+    nav ul li {
+        width: auto; /* Permite que el LI solo ocupe el espacio de su contenido */
+        text-align: right; /* Alineación del texto (ya no es central) */
+        margin-left: 10px; /* Espacio entre los elementos de menú */
+        margin-bottom: 0;
+    }
+
+    nav ul li .dropdown-toggle {
+        padding: 5px 8px; /* Ajusta el padding para un mejor área de toque */
+        font-size: 0.9em; /* Fuente más legible */
+        white-space: nowrap; 
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block; 
+    }
+
+    /* 8. Estilos para el área de contenido principal */
+    .main-content-area {
+        /* Ahora el contenido ocupa el 100% del ancho bajo la nav */
+        flex: 1 0 auto; 
+        width: 100%;
+        padding: 10px; 
+        overflow-y: auto; 
+    }
+    
+    /* Mantenemos tus estilos de impresión y tabla para el contenido */
+    .container {
+        padding: 3mm;
+        border: none;
+    }
+    /* ... (El resto de tus estilos para el contenido van aquí) ... */
+    .print-header {
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 5mm;
+        padding-bottom: 3mm;
+        border-bottom: 1px solid #eee;
+    }
+
+    .company-logo {
+        max-width: 25mm;
+        height: auto;
+        margin-bottom: 3mm;
+        margin-right: 0;
+    }
+    
+    .title-section h1 {
+        font-size: 1.2em;
+    }
+    .title-section h2 {
+        font-size: 0.9em;
+    }
+
+    .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .header-section div {
+        margin-bottom: 3px;
+        text-align: left;
+    }
+
+    .header-section .right-align {
+        text-align: left;
+    }
+    
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    table td, table th {
+        font-size: 0.75em;
+        padding: 2px;
+    }
+
+    .highlight-section table,
+    .operation-section table {
+        width: 100%;
+    }
+    .highlight-section td,
+    .operation-section td,
+    .operation-section th {
+        font-size: 0.85em;
+        padding: 4px;
+    }
+}
+/* --- Estilos Opcionales para Tablets (entre 601px y 768px de ancho) --- */
+@media only screen and (min-width: 601px) and (max-width: 768px) {
+    body {
+        margin: 10mm;
+    }
+    .container {
+        padding: 5mm;
+    }
+    /* Ajustes para la navegación en tablets */
+    .navbar .logo-img {
+        max-width: 40px; /* Logo ligeramente más pequeño para tablets */
+    }
+    .navbar .logo-text {
+        font-size: 1em;
+    }
+    .navbar h1, .navbar h2 {
+        font-size: 1.3em;
+    }
+    .company-logo { /* Si el logo de la navegación usa esta clase */
+        max-width: 40px; /* Tamaño del logo para tablets */
+    }
+    .title-section h1 {
+        font-size: 1.5em;
+    }
+    .title-section h2 {
+        font-size: 1.1em;
+    }
+    table {
+        font-size: 0.8em;
+    }
+}    

@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Matsa - Sistema de base de datos</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <style>
+        .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+        display: none;
+        justify-content: center;
+        align-items: center;
+
+        /* Propiedades para la animación */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease; /* Transición para el fondo */
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        min-width: 300px;
+        position: relative; /* Necesario para que el top funcione */
+
+        /* Propiedades para la animación de deslizamiento */
+        transform: translateY(-50px); /* Empieza un poco arriba */
+        opacity: 0; /* Empieza transparente */
+        transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Transición para el contenido */
+    }
+
+    .modal.show .modal-content {
+        transform: translateY(0); /* Se desliza a su posición normal */
+        opacity: 1; /* Se vuelve visible */
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+        
+        /* Estilos para el estado de disponibilidad */
+    .available {
+        color: #4CAF50; /* Verde */
+        font-weight: bold;
+    }
+    .low-stock {
+        color: #ff9800; /* Naranja */
+        font-weight: bold;
+    }
+    .not-available {
+        color: #F44336; /* Rojo */
+        font-weight: bold;
+    }
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gabeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    {% if user_role == 'admin' %}
+                    <a href="/costeos">Costeos de manufactura</a>
+                    {% endif %}
+                <!--<a href="/papeleria">Papeleria</a>-->
+                </div>
+            </li>
+            
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            {% if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+            <!--<li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/ventas">Ventas</a>
+                </div>
+                <div></div>
+            </li>-->
+        
+        </ul>
+    </nav>
+    <main>
+        <h2>Gestión de carrito de herramientas - Almacen</h2>
+
+        <!-- Toast Container for messages -->
+        <div id="toastContainer" class="toast-container"></div>
+
+        <!-- Formulario de Carrito de Herramientas -->
+        <div>
+            <form id="productoForm">
+                <section class="form-section">
+                <input type="hidden" id="productoId">
+
+                <div>
+                    <label for="zona_producto">Zona del producto</label>
+                    <select id="zona_producto" name="zona_producto" required>
+                        <option value="">--- Seleccione una opción ---</option>
+                        <option value="Carrito 1">Carrito 1</option>
+                        <option value="Carrito 2">Carrito 2</option>
+                        <option value="Carrito 3">Carrito 3</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="nombre_producto">Nombre del producto</label>
+                    <input type="text" id="nombre_producto" name="nombre_producto" required>
+                </div>
+                <div>
+                    <label for="proveedor">Proveedor (Opcional)</label>
+                    <input type="text" id="proveedor" name="proveedor">
+                </div>
+                <div>
+                    <label for="medida_descripcion">Medida/descripción</label>
+                    <input type="text" id="medida_descripcion" name="medida_descripcion" required>
+                </div>
+                <div>
+                    <label for="codigo_cliente">Código de cliente (Opcional)</label>
+                    <input type="text" id="codigo_cliente" name="codigo_cliente">
+                </div>
+                 <div>
+                    <label for="minimo">Mínimo:</label>
+                    <input type="number" id="minimo" name="minimo" required min="0">
+                </div>
+                <div>
+                    <label for="maximo">Máximo:</label>
+                    <input type="number" id="maximo" name="maximo" required min="0">
+                </div>
+                <div>
+                    <label for="cantidad_prestada">Cantidad a prestar</label>
+                    <input type="number" id="cantidad_prestada" name="cantidad_prestada" required min="0">
+                </div>
+                <div>
+                    <label for="cantidad_actual">Cantidad actual</label>
+                    <input type="number" id="cantidad_actual" name="cantidad_actual" required min="0">
+                </div>
+                </section>
+                <!-- Botón de guardar movido dentro del formulario -->
+                <div class="form-buttons">
+                    <button type="submit">Guardar elemento</button>
+                    <button type="button" id="cancelEdit" class="accion-btn cancel hidden">Cancelar edición</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sección de Búsqueda -->
+        <section class="form-buttons">
+            <section class="form-section">
+            <h3>Buscar Elementos</h3>
+            <input type="text" id="searchProductoInput" placeholder="Buscar por Medida/Descripción...">            
+            </section>
+        </section>
+
+        <!-- Tabla de Carrito de Herramientas -->
+        <div>
+            <h2>Elementos Registrados</h2>
+            <table id="tablaDatos">
+                <thead>
+                    <tr>
+                        <th>Zona Producto</th>
+                        <th>Nombre Producto</th>
+                        <th>Proveedor</th>
+                        <th>Medida/Descripción</th>
+                        <th>Código Cliente</th>
+                        <th>Minimo</th>
+                        <th>Maximo</th>
+                        <th>Cantidad Prestada</th>
+                        <th>Cantidad Actual</th>
+                        <th>Disponibilidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="productosTableBody">
+                    <!-- Las filas de productos se insertarán aquí por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar este elemento?</p>
+            <div>
+                <button id="confirmDeleteBtn" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeModal()" class="accion-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="barcodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeBarcodeModal()">&times;</span>
+        <h3>Código de Barras</h3>
+        <div id="barcodeContent" style="text-align: center;">
+            <p><strong>Nombre Producto:</strong> <span id="barcode-nombre_producto"></span></p>
+            <p><strong>Medida/Descripción:</strong> <span id="barcode-medida_descripcion"></span></p>
+            <p><strong>Código Cliente:</strong> <span id="barcode-codigo_cliente"></span></p>
+            <p><strong>Cantidad Actual:</strong> <span id="barcode-cantidad_actual"></span></p>
+            <p><strong>Disponibilidad:</strong> <span id="barcode-disponibilidad"></span></p>
+            <div id="barcodeContainer"></div>
+            <div style="margin-top: 20px;">
+                <button onclick="printBarcode()" class="accion-btn imprimir">Imprimir Código</button>
+                <button onclick="saveBarcodeAs('jpeg')" class="accion-btn imprimir">Guardar JPG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        const USER_ROLE = "{{ user_role }}"; 
+
+        // Declaración de variables, asegurando que se obtienen los elementos
+        const productoForm = document.getElementById('productoForm');
+        const productoIdInput = document.getElementById('productoId');
+        // El 'formTitle' parece que no existe en el HTML actual, lo comento o deberías añadirlo si lo necesitas.
+        
+        // const formTitle = document.getElementById('formTitle'); 
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const productosTableBody = document.getElementById('productosTableBody');
+        const searchProductoInput = document.getElementById('searchProductoInput');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Modal elements
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let productoToDeleteId = null; // Variable para almacenar el ID del producto a eliminar
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const profileToggle = document.querySelector('.profile-toggle');
+            const profileContainer = document.querySelector('.profile-menu-container-top-right');
+            const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+            if (profileToggle && profileMenu && profileContainer) {
+                profileToggle.addEventListener('click', () => {
+                    // Oculta/Muestra el menú usando la clase 'hidden'
+                    profileMenu.classList.toggle('hidden'); 
+                    // Añade/Remueve la clase 'active' para girar el icono de la flecha
+                    profileContainer.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+            fetchProductos(); // Cargar productos al cargar la página
+
+            if (productoForm) {
+                productoForm.addEventListener('submit', async (e) => {
+                    e.preventDefault(); // Previene el envío del formulario por defecto
+                    await saveProducto(); // Llama a la función para guardar/actualizar el producto
+                });
+            } else {
+                console.error("Error: El elemento 'productoForm' no se encontró en el DOM.");
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', clearForm);
+            } else {
+                console.error("Error: El elemento 'cancelEditBtn' no se encontró en el DOM.");
+            }
+            
+            if (productosTableBody) {
+                productosTableBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) { // ¡Aquí se usan las clases!
+                        const id = e.target.dataset.id;
+                        editProducto(id);
+                    } else if (e.target.classList.contains('delete-btn')) { // ¡Aquí se usan las clases!
+                        const id = e.target.dataset.id;
+                        openModal(id);
+                    } else if(e.target.classList.contains('code-btn')){
+                        const id = e.target.dataset.id;
+                        generateBarcode(id);
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'productosTableBody' no se encontró en el DOM.");
+            }
+
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (productoToDeleteId) {
+                        await deleteProducto(productoToDeleteId);
+                        closeModal();
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'confirmDeleteBtn' no se encontró en el DOM.");
+            }
+
+            // El evento `keydown` ahora escucha en todo el documento
+let barcodeBuffer = '';
+let lastTimestamp = 0;
+const searchProductoInput = document.getElementById('searchProductoInput');
+
+
+    if (searchProductoInput) {
+        // Esto es lo que necesitas para la búsqueda en tiempo real
+        // La función searchProductos se ejecutará con cada letra que escribas
+        searchProductoInput.addEventListener('input', () => {
+            searchProductos();
+        });
+        
+        // Esto previene que al presionar "Enter" dentro del campo de búsqueda
+        // se recargue la página o se active otra acción no deseada.
+        searchProductoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+            }
+        });
+
+    } else {
+        console.error("Error: El elemento 'searchProductoInput' no se encontró en el DOM.");
+    }
+
+
+            // Toggle para el menú desplegable (si tienes uno en tu nav)
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function() {
+                    const dropdownMenu = this.nextElementSibling;
+                    if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                });
+            }
+        });
+
+        // Función para mostrar mensajes como "toast"
+        function showMessage(message, type) {
+            if (!toastContainer) {
+                console.error("Error: El elemento 'toastContainer' no se encontró en el DOM. Mensaje: " + message);
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            // Eliminar el toast después de 5 segundos (coincide con la duración de la animación CSS)
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Función para abrir el modal de confirmación
+function openModal(id) {
+    productoToDeleteId = id;
+    if (deleteConfirmModal) {
+        // Asegúrate de que display sea flex para que el modal sea visible antes de la animación
+        deleteConfirmModal.style.display = 'flex';
+        // Usa setTimeout para dar tiempo a que el navegador aplique 'display: flex' antes de la transición
+        setTimeout(() => {
+            deleteConfirmModal.classList.add('show');
+        }, 10); // Un pequeño retraso para asegurar que la animación se dispare
+    } else {
+        console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+    }
+}
+
+// Función para cerrar el modal de confirmación
+function closeModal() {
+    if (deleteConfirmModal) {
+        deleteConfirmModal.classList.remove('show');
+        // Espera a que la transición termine (300ms) antes de cambiar el display
+        setTimeout(() => {
+            deleteConfirmModal.style.display = 'none';
+        }, 300); // Coincide con la duración de la transición en CSS
+        productoToDeleteId = null;
+    } else {
+        console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+    }
+}
+
+        function closeBarcodeModal() {
+    const barcodeModal = document.getElementById('barcodeModal');
+     if (barcodeModal) {
+        barcodeModal.classList.remove('show');
+        // Espera a que la transición termine (300ms) antes de cambiar el display
+        setTimeout(() => {
+            barcodeModal.style.display = 'none';
+        }, 300); // Coincide con la duración de la transición en CSS
+    }
+}
+
+function printBarcode() {
+    const nombreProducto = document.getElementById('barcode-nombre_producto').textContent;
+    const medidaDescripcion = document.getElementById('barcode-medida_descripcion').textContent;
+    const barcodeSVG = document.getElementById('barcodeContainer').innerHTML;
+
+    // Se crea una ventana para la impresión
+    const printWindow = window.open('', '', 'height=600,width=800');
+
+    // Se genera un documento HTML completamente nuevo con el formato de la etiqueta
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Imprimir Etiquetas</title>
+            <style>
+                /* Estilos para el formato de etiqueta */
+                @page {
+                    size: Letter; /* Tamaño de papel, puedes cambiarlo a A4 si es necesario */
+                    margin: 0.5in; /* Mínimo margen para la impresora */
+                }
+                body {
+                    font-family: sans-serif;
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr); /* 3 columnas de etiquetas por fila */
+                    gap: 10px; /* Espacio entre las etiquetas */
+                }
+                .etiqueta-container {
+                    width: 2.625in;  /* Ancho de la etiqueta Avery 5160 */
+                    height: 1in;     /* Altura de la etiqueta Avery 5160 */
+                    padding: 0.1in;
+                    border: 1px solid #ccc; /* Borde opcional para visualización */
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    page-break-inside: avoid;
+                }
+                h4, p {
+                    margin: 0;
+                    font-size: 8px;
+                    text-align: center;
+                }
+                svg {
+                    width: 90%;
+                    height: auto;
+                    margin-top: 5px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="etiqueta-container">
+                <h4>${nombreProducto}</h4>
+                <p>${medidaDescripcion}</p>
+                ${barcodeSVG}
+            </div>
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+    printWindow.close();
+}
+
+function saveBarcodeAs(format) {
+    const svgElement = document.querySelector('#barcodeContainer svg');
+    if (!svgElement) {
+        console.error('No se encontró el SVG del código de barras.');
+        return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    const img = new Image();
+
+    img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        // Se usa 'image/jpeg' y una calidad de 1.0 (máxima)
+        const dataURL = canvas.toDataURL('image/jpeg', 1.0);
+
+        const link = document.createElement('a');
+        link.download = `codigo_de_barras.jpg`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+}
+
+// Función para obtener y mostrar todos los productos
+        async function fetchProductos() {
+            try {
+                const response = await fetch('/obtener_carrito_herramientas'); // Endpoint CORREGIDO
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const productos = await response.json();
+                renderTable(productos);
+            } catch (error) {
+                console.error('Error al obtener elementos del carrito:', error);
+                showMessage('Error al cargar los elementos del carrito.', 'error');
+            }
+        }
+        function checkDisponibilidad(cantidadActual, minimo, maximo) {
+    const actual = parseInt(cantidadActual);
+    const min = parseInt(minimo);
+    const max = parseInt(maximo);
+
+    if (isNaN(actual) || isNaN(min) || isNaN(max)) {
+        return { text: 'N/A', class: '' };
+    }
+    if (actual <= 0) {
+        return { text: 'No Disponible', class: 'not-available' };
+    }
+    
+    if (actual < max / 2) {
+        return { text: 'Bajo Stock', class: 'low-stock' };
+    }
+    if(actual > max){
+        return { text: 'Sobre Stock', class: 'sobre-stock' }
+    }
+    if (actual >= min && actual <= max) {
+        return { text: 'Disponible', class: 'available' };
+    }
+    return { text: 'N/A', class: '' };
+}
+
+        // Función para renderizar la tabla
+        function renderTable(productos) {
+    if (!productosTableBody) {
+        console.error("Error: El elemento 'productosTableBody' no se encontró en el DOM, no se puede renderizar la tabla.");
+        return;
+    }
+    productosTableBody.innerHTML = '';
+    
+    // El total de columnas es 12 ahora, contando las 3 nuevas.
+    const totalColumns = 12; 
+
+    if (productos.length === 0) {
+        const row = productosTableBody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = totalColumns; 
+        cell.textContent = 'No hay elementos registrados en el carrito.';
+        cell.style.textAlign = 'center';
+        return;
+    }
+    productos.forEach((producto) => {
+        // Tu array de datos debe venir ahora con los nuevos valores en estos índices
+        // Asumiendo el siguiente orden: [id, zona, nombre, proveedor, medida, codigo_cliente, minimo, maximo, cantidad_prestada, cantidad_actual]
+        const id = producto[0];
+        const zona_producto = producto[1];
+        const nombre_producto = producto[2];
+        const proveedor = producto[3] || 'N/A';
+        const medida_descripcion = producto[4];
+        const codigo_cliente = producto[5] || 'N/A';
+        const cantidad_prestada = producto[6];
+        const cantidad_actual = producto[7];
+        const minimo = producto[8];
+        const maximo = producto[9];
+        
+        const disponibilidadStatus = checkDisponibilidad(cantidad_actual, minimo, maximo);
+
+        const row = productosTableBody.insertRow();
+        row.innerHTML = `
+            
+            <td>${zona_producto}</td>
+            <td>${nombre_producto}</td>
+            <td>${proveedor}</td>
+            <td>${medida_descripcion}</td>
+            <td>${codigo_cliente}</td>
+            <td>${minimo !== null ? minimo : 'N/A'}</td>
+            <td>${maximo !== null ? maximo : 'N/A'}</td>
+            <td>${cantidad_prestada}</td>
+            <td>${cantidad_actual}</td>
+            <td class="${disponibilidadStatus.class}">${disponibilidadStatus.text}</td>
+            <td>
+                <button class="accion-btn edit-btn" data-id="${id}">Editar</button>
+                ${USER_ROLE !== 'employee' ?
+                    `<button class="accion-btn delete-btn" data-id="${id}">Eliminar</button>`
+                    :
+                    ''
+                }
+                <button class="accion-btn code-btn" data-id="${id}">Codigo de barras</button>
+            </td>
+        `;
+    });
+}
+
+async function generateBarcode(id) {
+    try {
+        const response = await fetch(`/obtener_carrito_herramientas/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const producto = await response.json();
+        
+        // Obtener elementos del modal
+        const barcodeModal = document.getElementById('barcodeModal');
+        const barcodeContainer = document.getElementById('barcodeContainer');
+        const barcodeNombreProducto = document.getElementById('barcode-nombre_producto');
+        const barcodeMedidaDescripcion = document.getElementById('barcode-medida_descripcion');
+        const barcodeCodigoCliente = document.getElementById('barcode-codigo_cliente');
+        const barcodeCantidadActual = document.getElementById('barcode-cantidad_actual');
+        const barcodeDisponibilidad = document.getElementById('barcode-disponibilidad');
+        
+        
+        // Asignar los datos del producto a los elementos del modal
+        const zona_producto = producto[1];
+        const nombre_producto = producto[2];
+        const proveedor = producto[3] || 'N/A';
+        const medida_descripcion = producto[4];
+        const codigo_cliente = producto[5] || 'N/A';
+        const cantidad_prestada = producto[6];
+        const cantidad_actual = producto[7];
+        const minimo = producto[8];
+        const maximo = producto[9];
+        const disponibilidadStatus = checkDisponibilidad(cantidad_actual, minimo, maximo);
+        
+        barcodeNombreProducto.textContent = nombre_producto;
+        barcodeMedidaDescripcion.textContent = medida_descripcion;
+        barcodeCodigoCliente.textContent = codigo_cliente;
+        barcodeCantidadActual.textContent = cantidad_actual;
+        barcodeDisponibilidad.textContent = disponibilidadStatus.text;
+        
+        // Generar un valor único para el código de barras
+        const barcodeValue = `${medida_descripcion}`; // Combina el ID con el código de cliente
+        
+        // Limpiar el contenedor anterior y generar el nuevo código de barras
+        barcodeContainer.innerHTML = `<svg id="barcode"></svg>`;
+        JsBarcode("#barcode", barcodeValue, {
+            format: "CODE128", // Puedes elegir el formato que prefieras (CODE128 es común)
+            width: 1,
+            height: 50,
+            displayValue: true
+        });
+        
+        // Mostrar el modal
+        barcodeModal.style.display = 'flex';
+                setTimeout(() => {
+            barcodeModal.classList.add('show');
+        }, 10);
+
+        
+    } catch (error) {
+        console.error('Error al generar el código de barras:', error);
+        showMessage('Error al generar el código de barras.', 'error');
+    }
+}
+
+        // Función para guardar o actualizar un producto
+        // Función para guardar o actualizar un producto
+        async function saveProducto() {
+            // Referencias a los elementos del formulario
+            const zonaProductoEl = document.getElementById('zona_producto');
+            const nombreProductoEl = document.getElementById('nombre_producto');
+            const proveedorEl = document.getElementById('proveedor');
+            const medidaDescripcionEl = document.getElementById('medida_descripcion');
+            const codigoClienteEl = document.getElementById('codigo_cliente');
+            // INICIO de nuevas referencias
+            const minimoEl = document.getElementById('minimo');
+            const maximoEl = document.getElementById('maximo');
+            // FIN de nuevas referencias
+            const cantidadPrestadaEl = document.getElementById('cantidad_prestada');
+            const cantidadActualEl = document.getElementById('cantidad_actual');
+            
+            // Verificaciones defensivas para los elementos requeridos
+            if (!productoIdInput || !zonaProductoEl || !nombreProductoEl || !medidaDescripcionEl || !cantidadPrestadaEl || !cantidadActualEl) {
+                showMessage('Error: Faltan elementos requeridos del formulario en el DOM.', 'error');
+                return;
+            }
+
+            // AÑADIENDO LA LÓGICA DE VALIDACIÓN Y RESTA
+            const cantidadPrestada = parseInt(cantidadPrestadaEl.value, 10);
+            const cantidadActual = parseInt(cantidadActualEl.value, 10);
+
+            // 1. Validar que la cantidad a prestar no sea mayor que la cantidad actual
+            if (cantidadPrestada > cantidadActual) {
+                showMessage("Acción no realizada, no tiene que pasarse del actual.", 'error');
+                return; // Detiene la ejecución de la función
+            }
+
+            // 2. Realizar la operación de resta
+            const nuevaCantidadActual = cantidadActual - cantidadPrestada;
+            cantidadActualEl.value = nuevaCantidadActual; // Actualiza el valor en el campo HTML
+
+            // Lógica original para guardar o actualizar
+            const id = productoIdInput.value;
+            const url = id ? `/actualizar_carrito_herramientas/${id}` : '/guardar_carrito_herramientas'; // Endpoints actualizados
+            const method = 'POST';
+
+            const data = {
+                zona_producto: zonaProductoEl.value,
+                nombre_producto: nombreProductoEl.value,
+                proveedor: proveedorEl ? proveedorEl.value : '', // Opcional
+                medida_descripcion: medidaDescripcionEl.value,
+                codigo_cliente: codigoClienteEl ? codigoClienteEl.value : '',
+                minimo: parseInt(minimoEl.value),
+                maximo: parseInt(maximoEl.value), // Opcional
+                cantidad_prestada: cantidadPrestada, // Ya se ha validado
+                cantidad_actual: nuevaCantidadActual // Ya se ha restado
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Obtener los valores después de la actualización
+                    const cantidad_actual_final = parseInt(cantidadActualEl.value);
+                    const minimo = parseInt(minimoEl.value);
+                    const maximo = parseInt(maximoEl.value);
+                    
+                    // Comprobar la disponibilidad del producto
+                    const disponibilidadStatus = checkDisponibilidad(cantidad_actual_final, minimo, maximo);
+
+                    // Determinar el mensaje del toast basado en el estado
+                    if (disponibilidadStatus.text === 'Bajo Stock') {
+                        showMessage('Se necesita comprar nuevo material.', 'info');
+                    } else if (disponibilidadStatus.text === 'No Disponible') {
+                        showMessage('No hay material disponible', 'error');
+                    } else {
+                        // Mensaje por defecto si no se cumplen las condiciones anteriores
+                        showMessage(result.message || 'Operación exitosa.', 'success');
+                    }
+                    
+                    clearForm();
+                    fetchProductos();
+                } else {
+                    showMessage(result.message || 'Error en la operación.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al guardar/actualizar el elemento del carrito:', error);
+                showMessage('Error de conexión o servidor.', 'error');
+            }
+        }
+        // Función para cargar los datos de un producto en el formulario para edición
+        async function editProducto(id) {
+            try {
+                const response = await fetch(`/obtener_carrito_herramientas/${id}`); // Endpoint actualizado
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const producto = await response.json();
+                
+                // Asignar valores a los campos del formulario
+                if (productoIdInput) productoIdInput.value = producto[0];
+                if (document.getElementById('zona_producto')) document.getElementById('zona_producto').value = producto[1];
+                if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = producto[2];
+                if (document.getElementById('proveedor')) document.getElementById('proveedor').value = producto[3] || '';
+                if (document.getElementById('medida_descripcion')) document.getElementById('medida_descripcion').value = producto[4];
+                if (document.getElementById('codigo_cliente')) document.getElementById('codigo_cliente').value = producto[5] || '';
+                if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = producto[6];
+                if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = producto[7];
+                if (document.getElementById('minimo')) document.getElementById('minimo').value = producto[8];
+                if (document.getElementById('maximo')) document.getElementById('maximo').value = producto[9];
+
+                // Comentado porque 'formTitle' no existe en el HTML proporcionado
+                // if (formTitle) formTitle.textContent = 'Editar Elemento del Carrito'; 
+                if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error al obtener el elemento para edición:', error);
+                showMessage('Error al cargar los datos del elemento para edición.', 'error');
+            }
+        }
+
+        // Función para eliminar un producto
+        async function deleteProducto(id) {
+            try {
+                const response = await fetch(`/eliminar_carrito_herramientas/${id}`, { // Endpoint actualizado
+                    method: 'POST' // Ojo: Se sugirió usar 'DELETE' en el backend para RESTful, pero 'POST' también funciona.
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage(result.message || 'Elemento del carrito eliminado correctamente.', 'success');
+                    fetchProductos();
+                } else {
+                    showMessage(result.message || 'Error al eliminar el elemento del carrito.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al eliminar el elemento del carrito:', error);
+                showMessage('Error de conexión al intentar eliminar el elemento del carrito.', 'error');
+            }
+        }
+
+        // Función para buscar productos por Medida/Descripción
+        async function searchProductos() {
+            if (!searchProductoInput) {
+                console.error("Error: El elemento 'searchProductoInput' no se encontró en el DOM, no se puede buscar.");
+                return;
+            }
+            const searchTerm = searchProductoInput.value.trim();
+            try {
+                const response = await fetch(`/buscar_carrito_herramientas?q=${encodeURIComponent(searchTerm)}`); // Endpoint actualizado
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const productos = await response.json();
+                renderTable(productos);
+            } catch (error) {
+                console.error('Error al buscar elementos del carrito:', error);
+                showMessage('Error al buscar elementos del carrito.', 'error');
+            }
+        }
+
+        // Función para limpiar el formulario y volver al modo de agregar
+        function clearForm() {
+            if (productoForm) productoForm.reset();
+            if (productoIdInput) productoIdInput.value = '';
+            // Comentado porque 'formTitle' no existe en el HTML proporcionado
+            // if (formTitle) formTitle.textContent = 'Agregar Nuevo Elemento al Carrito'; 
+            if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+
+            // También limpiar los campos individualmente para mayor seguridad
+            if (document.getElementById('zona_producto')) document.getElementById('zona_producto').value = '';
+            if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = '';
+            if (document.getElementById('proveedor')) document.getElementById('proveedor').value = '';
+            if (document.getElementById('medida_descripcion')) document.getElementById('medida_descripcion').value = '';
+            if (document.getElementById('codigo_cliente')) document.getElementById('codigo_cliente').value = '';
+            if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = '';
+            if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = '';
+            if (document.getElementById('minimo')) document.getElementById('minimo').value = '';
+            if (document.getElementById('maximo')) document.getElementById('maximo').value = '';
+        }
+
+        
+    </script>
+</body>
+</html>

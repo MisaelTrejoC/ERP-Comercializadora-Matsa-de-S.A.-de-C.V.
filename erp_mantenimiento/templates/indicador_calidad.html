@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Indicador de Calidad</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+    <style>
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+    }
+
+    .form-section .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-section .input-group label {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-section  .input-group input, 
+    .form-section .input-group select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+        
+
+        .data-list {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .data-list p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+         .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 65vw;
+            margin: auto;
+        }
+
+        .btn-calculate {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+            background-color: #28a745;
+        }
+
+        .btn-calculate:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacenamiento</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+                <div id="mantenimento-menu" class="dropdown-menu">
+                    <a href="/indicador_mantenimiento">Indicador mantenimento</a>
+                    <a href="/idicador_calidad">Indicador calidad</a>
+                    <a href="/indicador_produccion">Indicador produccion</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <h2>Indicador de Calidad</h2>
+        <div class="form-section">
+            <div class="input-group">
+                <label for="month-select">Selecciona el Mes:</label>
+                <select id="month-select"></select>
+            </div>
+            <div class="input-group">
+                <label>Total de Piezas Fabricadas:</label>
+                <input type="text" id="total-manufactured" value="0" readonly>
+            </div>
+            <div class="input-group">
+                <label>Total de Scrap (unidades):</label>
+                <input type="text" id="total-scrap" value="0" readonly>
+            </div>
+        </div>
+        <section class="form-section">
+            <div class="chart-container">
+                <canvas id="qualityChart"></canvas>
+            </div>
+        </section>
+        <div class=" button-group"> 
+            <button class="btn btn-calculate" onclick="calculateAndDisplayChart()">Generar gráfico de calidad</button>
+        </div>
+    </main>
+    
+    <script>
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        let qualityChart;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // La lógica para el select se mantiene igual, aunque ahora
+            // el botón "Generar" puede trabajar independientemente.
+            const select = document.getElementById('month-select');
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = "Selecciona un mes...";
+            select.appendChild(defaultOption);
+
+            monthNames.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = month;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', fetchMonthlyData);
+        });
+
+
+        async function fetchMonthlyData() {
+            const month = document.getElementById('month-select').value;
+            if (!month) {
+                document.getElementById('total-manufactured').value = 0;
+                document.getElementById('total-scrap').value = 0;
+                return;
+            }
+            try {
+                const response = await fetch(`/api/get_monthly_data?month=${month}`);
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('total-manufactured').value = result.data.total_manufactured;
+                    document.getElementById('total-scrap').value = result.data.total_scrap;
+                } else {
+                    console.error("Error del servidor:", result.message);
+                    alert("Error al obtener los datos. Por favor, revisa el servidor.");
+                }
+            } catch (error) {
+                console.error("Error al conectar con el servidor:", error);
+                alert("Error al conectar con el servidor. ¿Está funcionando el backend?");
+            }
+        }
+
+        async function calculateAndDisplayChart() {
+    try {
+        const response = await fetch('/api/get_all_monthly_data');
+        const result = await response.json();
+        
+        if (result.success) {
+            // Se crea un array con los datos de todos los meses
+            const monthlyData = new Array(12).fill(null);
+            
+            // Se llena el array con los datos recibidos del backend
+            result.data.forEach(item => {
+                monthlyData[item.month - 1] = item;
+            });
+            
+            // Se calculan los porcentajes de scrap para cada mes
+            const scrapPercentages = monthlyData.map(item => {
+                if (item && item.total_manufactured > 0) {
+                    return ((item.total_scrap / item.total_manufactured) * 100).toFixed(2);
+                }
+                return 0; // Si no hay datos, se establece en 0
+            });
+
+            // Se obtienen los nombres de los 12 meses
+            const labels = monthNames;
+
+            // Se llama a la función para crear el gráfico con los datos de los 12 meses
+            createQualityChart(scrapPercentages, labels);
+        } else {
+            console.error("Error del servidor:", result.message);
+            alert("Error al obtener los datos. Por favor, revisa el servidor.");
+        }
+    } catch (error) {
+        console.error("Error al conectar con el servidor:", error);
+        alert("Error al conectar con el servidor. ¿Está funcionando el backend?");
+    }
+}
+
+                function createQualityChart(scrapPercentages, labels) {
+    if (qualityChart) {
+        qualityChart.destroy();
+    }
+
+    const ctx = document.getElementById('qualityChart').getContext('2d');
+    
+    qualityChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Índice de Scrap (%)',
+                data: scrapPercentages,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    title: {
+                        display: true,
+                        text: 'Porcentaje de Scrap'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Meses'
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Indicador de Calidad por Mes'
+                },
+                // Se agrega la configuración de anotaciones aquí
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: 2.5,
+                            yMax: 2.5,
+                            borderColor: 'rgb(255, 99, 132)', // Color rojo para la línea
+                            borderWidth: 2,
+                            borderDash: [10, 5], // Hace la línea discontinua
+                            label: {
+                                content: 'Objetivo: 2.5%',
+                                enabled: true,
+                                position: 'end'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+    </script>
+</body>
+</html>

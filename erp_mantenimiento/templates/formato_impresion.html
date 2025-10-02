@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de manufactura - Formato de Impresión</title>
+    <style>
+        /* Estilos generales para el formato de impresión */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20mm; /* Márgenes para impresión */
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 210mm; /* Ancho de una hoja A4 */
+            margin: 0 auto;
+            border: 1px solid #ccc; /* Borde general, puedes quitarlo si no lo quieres en la impresión final */
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+
+        .print-header {
+            display: flex; /* Usa flexbox para alinear elementos */
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center; /* Alinea verticalmente los elementos al centro */
+            gap: 15px;
+            margin-bottom: 3mm; /* Espacio debajo del encabezado */
+            padding-bottom: 5mm; /* Pequeño padding en la parte inferior */
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-left {
+            text-align: left; /* Alinea el logo a la izquierda */
+        }
+
+        .header-center {
+            text-align: center; /* Centra el título grande */
+            white-space: nowrap; /* Evita que el título se divida en varias líneas */
+        }
+
+        .header-right {
+            text-align: right; /* Alinea la tabla de información a la derecha */
+        }
+
+        .company-logo {
+            max-width: 38mm; /* Ajusta este valor para controlar el tamaño del logo */
+            height: auto;
+            display: block; /* Asegura que el margin auto funcione si lo necesitaras en un flex/grid item */
+            margin-right: auto; /* Empuja el logo a la izquierda dentro de su celda */
+        }
+
+        .print-title {
+            margin: 0; /* Elimina el margen por defecto de h1 */
+            font-size: 24pt; /* Tamaño de fuente para el título principal */
+            color: #2c3e50;
+        }
+
+        .header-info-table {
+            width: auto; /* La tabla tomará solo el ancho necesario */
+            font-size: 9pt; /* Fuente más pequeña para la información detallada */
+            border-collapse: collapse; /* Para bordes limpios si los añades */
+            margin-left: auto; /* Centra la tabla dentro del header-right o la empuja a la derecha */
+        }
+
+        .header-info-table td {
+            padding: 1mm 2mm; /* Pequeño relleno para las celdas */
+            white-space: nowrap; /* Evita que el texto se rompa */
+            text-align: center;
+        }
+
+        .company-logo {
+            max-width: 36mm; /* Ajusta este valor para controlar el ancho del logo. Puedes probar con 50mm, 70mm, etc. */
+            height: auto; /* Mantiene la proporción de la imagen */
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        table td, table th {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .header-section div {
+            flex: 1;
+        }
+
+        .header-section .right-align {
+            text-align: right;
+        }
+
+        .title-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title-section h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+        .title-section h2 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+        }
+
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 30%; /* Ajusta el ancho de la primera columna para las etiquetas */
+        }
+
+        .info-table td:nth-child(2) {
+            width: 40%; /* Ancho para el valor */
+        }
+        .info-table td:nth-child(3) {
+            width: 30%; /* Ancho para la unidad o información adicional */
+        }
+
+        .highlight-section {
+            background-color: #FFFF00; /* Amarillo */
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .highlight-section table {
+            margin: 0 auto;
+            width: 90%;
+        }
+
+        .highlight-section td {
+            border: none; /* Sin bordes internos en la sección resaltada */
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 8px 4px;
+        }
+
+        .highlight-section td:first-child {
+            text-align: left;
+        }
+        .highlight-section td:nth-child(2) {
+            text-align: right;
+            width: 30%;
+        }
+        .highlight-section td:last-child {
+            text-align: left;
+            width: 15%;
+        }
+
+        .operation-section {
+            margin-top: 15x;
+        }
+
+
+
+        .operation-section table {
+            width: 60%; /* Ajusta el ancho de la tabla de operaciones */
+            margin: 0 auto;
+            margin-top: 15px;
+        }
+
+        .operation-section th {
+            text-align: center;
+            background-color: #eee;
+        }
+        .operation-section td {
+            text-align: center;
+        }
+
+        /* Ocultar elementos no deseados en la impresión */
+        @media print {
+            body {
+                margin: 0; /* Eliminar márgenes del cuerpo para impresión */
+            }
+            .container {
+                border: none; /* Quitar el borde del contenedor en la impresión */
+                padding: 0;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+
+            }
+        }
+    </style>
+</head>
+<body>
+    <body>
+    <div class="container">
+        <div class="print-header">
+            <div class="header-left">
+                <img src="/static/logo empresa.png" alt="Company Logo" class="company-logo">
+            </div>
+
+            <div class="header-center">
+                <h1 class="print-title">ORDEN DE MANUFACTURA</h1>
+                <h2>INFORMACION GENERAL</h2>
+            </div>
+            
+            <div class="header-right">
+                <table class="header-info-table">
+                    <tr>
+                        <td>Formato:</td>
+                        <td id="printFormato">MTA-C-010</td>
+                    </tr>
+                    <tr>
+                        <td>Revisión:</td>
+                        <td id="printRevision">3</td>
+                    </tr>
+                    <!--<tr>
+                        <td>Fecha:</td>
+                        <td id="printFecha"></td></tr>
+                    <tr>-->
+                        <td>Elaborado por:</td>
+                        <td id="elaboradoPorDisplay"></td></tr>
+                </table>
+            </div>
+        </div>
+
+        </div>
+        <div class="header-section">
+            <div>
+                <p>ORDEN DE MARTERIAL</p>
+                <p>NO. PARTE INTERNO: <span id="printNoParteInterno"></span></p> </div>
+            <div class="right-align">
+                <p>NUMERO DE PARTE CLIENTE</p>
+                <p style="border: 1px solid #000; padding: 3px; display: inline;"><span id="printNumeroParteCliente"></span></p>
+            </div>
+        </div>
+        <table class="info-table">
+            <tr>
+                <td>MATERIAL</td>
+                <td colspan="2" id="printMaterial"></td>
+            </tr>
+            <tr>
+                <td>PROVEEDOR</td>
+                <td colspan="2" id="printProveedor"></td>
+                
+            </tr>
+            <!--<tr>
+                <td>DENSIDAD</td> <td id="printTipoMateriaPrima"></td>
+                <td></td>
+            </tr>-->
+            <tr>
+                <td>LONGITUD DE LA BARRA</td>
+                <td id="printLongitudBarra"></td>
+                <td>MILIMETROS</td>
+            </tr>
+            <tr>
+                <td>PESO DE LA BARRA</td>
+                <td id="printPesoBarra"></td>
+                <td>KILOGRAMOS</td>
+            </tr>
+            <tr>
+                <td>LONGITUD DE LA PIEZA (IN)</td> <td id="printLongitudPieza"></td>
+                <td>PULGADAS</td>
+            </tr>
+            <tr>
+                <td>LONGITUD DE LA PIEZA (MM)</td> <td id="printLongitudPiezaConvertidaDisplay"></td>
+                <td>MILIMETROS</td>
+            </tr>
+            <tr>
+                <td>LONGITUD CON CORTE + 2% SCRAP</td>
+                <td id="printLongitudConScrap"></td>
+                <td>MILIMETROS</td>
+            </tr>
+            <tr>
+                <td>PIEZAS POR BARRA</td>
+                <td id="printPiezasPorBarra"></td>
+                <td>PIEZAS</td>
+            </tr>
+        </table>
+
+        <div class="highlight-section">
+            <table>
+                <tr>
+                    <td>CANTIDAD DE LA ORDEN</td>
+                    <td id="printCantidadLaton"></td> <td>PIEZAS</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="highlight-section">
+            <table>
+                <tr>
+                    <td>CANTIDAD DE KILOGRAMOS</td>
+                    <td id="printCantidadKilogramos"></td>
+                    <td>KG</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="highlight-section">
+            <table>
+                <tr>
+                    <td><h4>CANTIDAD DE BARRAS:</h4></td>
+                    <td colspan="2"><span id="printCantidadBarras"></span></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="operation-section">
+            <h3>ORDEN DE MANUFACTURA</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>OPERACIÓN</th>
+                        <th>FECHA DE INICIO</th>
+                        <th>FECHA DE TÉRMINO</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTablaOperaciones">
+                    <tr>
+                        <td>TORNEADO</td>
+                        <td><span id="printFechaInicioTorneado"></span></td>
+                        <td><span id="printFechaTerminoTorneado"></span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f2f2f2;">COMENTARIOS</td>
+                        <td colspan="2" id="printComment" style="text-align: left;"></td>
+
+                    </tr>
+                </tbody>
+            </table>
+            <p>PIEZAS/Hr: <span id="printPiezasPorHr" style="font-weight: bold;"></span></p>
+            <p>HORAS REQUERIDAS: <span id="printHorasRequeridas" style="font-weight: bold;"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    const storedMaterial = localStorage.getItem('materialToPrint');
+    const printComment = localStorage.getItem('printComment') || '';
+    const diasCalculados = parseInt(localStorage.getItem('diasCalculadosPorTornos')) || 0;
+
+    const elaboradoPor = localStorage.getItem('elaboradoPor'); // <-- Correcto: obtiene el nombre directamente
+     const fechaTermino = localStorage.getItem('fechaTerminoCalculada');
+    if (fechaTermino) {
+        document.getElementById('printFechaTerminoTorneado').textContent = fechaTermino;
+    }
+
+const totalDiasHabiles = diasCalculados;
+
+
+    if (storedMaterial) {
+        const materialData = JSON.parse(storedMaterial);
+
+        const elaboradoPorElement = document.getElementById('elaboradoPorDisplay');
+
+        if (elaboradoPorElement) {
+            elaboradoPorElement.textContent = elaboradoPor;
+        }
+        
+        // Asignar valores a los elementos HTML con verificación
+        const idsAndData = {
+            'printNoParteInterno': materialData.noParteInterno || 'N/A',
+            'printNumeroParteCliente': materialData.numeroParteCliente || 'N/A',
+            'printMaterial': materialData.material || 'N/A',
+            'printTipoMateriaPrima': materialData.tipoMateriaPrima || 'N/A',
+            'printProveedor': materialData.proveedor || 'N/A',
+            'printLongitudBarra': materialData.longitudBarra,
+            'printPesoBarra': materialData.pesoBarra,
+            'printLongitudPieza': materialData.longitudPieza,
+            'printLongitudPiezaConvertidaDisplay': materialData.longitudPiezaConvertidaDisplay,
+            'printLongitudConScrap': materialData.longitudConScrap,
+            'printPiezasPorBarra': materialData.piezasPorBarra,
+            'printCantidadLaton': materialData.cantidadLaton,
+            'printCantidadKilogramos': materialData.cantidadKilogramos,
+            'printCantidadBarras': materialData.cantidadBarrasCalculada,
+            'printFecha': new Date().toLocaleDateString('es-ES'),
+            'printComment' : printComment,
+            //'printNombre': materialData.elaboradoPor,
+        };
+
+        for (const id in idsAndData) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = idsAndData[id];
+            }
+        }
+        
+        // Asignar el comentario, si el elemento existe
+        const printCommentElement = document.getElementById('printComment');
+        if (printCommentElement) {
+            printCommentElement.textContent = printComment;
+        }
+
+        // Asignar placeholders de fechas con verificación
+        const fechaInicioTorneadoElement = document.getElementById('printFechaInicioTorneado');
+        if (fechaInicioTorneadoElement) fechaInicioTorneadoElement.textContent = '______';
+        
+        const fechaTerminoTorneadoElement = document.getElementById('printFechaTerminoTorneado');
+        if (fechaTerminoTorneadoElement) fechaTerminoTorneadoElement.textContent = '______';
+
+
+        // Calcular fechas de inicio y término
+
+        
+        function addBusinessDays(date, days) {
+            let newDate = new Date(date.getTime());
+            let addedDays = 0;
+            while (addedDays < days) {
+                newDate.setDate(newDate.getDate() + 1);
+                const dayOfWeek = newDate.getDay(); 
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    addedDays++;
+                }
+            }
+            return newDate;
+        }
+        const fechaInicio = new Date();
+        let fechaTermino = new Date(fechaInicio);
+        if (totalDiasHabiles > 0) {
+            fechaTermino = addBusinessDays(fechaTermino, totalDiasHabiles);
+        }
+        
+        const formatFecha = (date) => {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        };
+
+        const fechaInicioFormato = formatFecha(fechaInicio);
+        const fechaTerminoFormato = formatFecha(fechaTermino);
+
+        const fechaInicioTorneadoFinal = document.getElementById('printFechaInicioTorneado');
+        if (fechaInicioTorneadoFinal) fechaInicioTorneadoFinal.textContent = fechaInicioFormato;
+
+        const fechaTerminoTorneadoFinal = document.getElementById('printFechaTerminoTorneado');
+        if (fechaTerminoTorneadoFinal) fechaTerminoTorneadoFinal.textContent = fechaTerminoFormato;
+        
+        // Cálculo y asignación de horas requeridas y piezas por hora
+        const horasXPieza = parseFloat(materialData.horasXPieza) || 0;
+        const cantidadDeOrdenTotalPiezas = (parseFloat(materialData.cantidadLaton) || 0);
+        
+        const printPiezasPorHrElement = document.getElementById('printPiezasPorHr');
+        if (printPiezasPorHrElement) {
+            printPiezasPorHrElement.textContent = horasXPieza > 0 ? horasXPieza : 'N/A';
+        }
+
+        let horasRequeridas = 'N/A';
+        if (cantidadDeOrdenTotalPiezas > 0 && horasXPieza > 0) {
+            horasRequeridas = Math.round(cantidadDeOrdenTotalPiezas / horasXPieza);
+        }
+        
+        const printHorasRequeridasElement = document.getElementById('printHorasRequeridas');
+        if (printHorasRequeridasElement) {
+            printHorasRequeridasElement.textContent = horasRequeridas;
+        }
+
+        // Limpiar localStorage
+        localStorage.removeItem('materialToPrint');
+        localStorage.removeItem('diasRequeridos');
+        localStorage.removeItem('printComment');
+        localStorage.removeItem('elaboradoPor'); // <-- Añadir también esta línea para limpiar
+
+        // Disparar la ventana de impresión
+        window.print();
+    } else {
+        console.warn("No se encontraron datos de material para imprimir.");
+        alert("No hay datos para imprimir. Por favor, regresa a la página principal y asegúrate de tener datos para generar el formato.");
+        window.close();
+    }
+});    </script>
+</body>
+</html>

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matsa - Gambetas</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <style>
+        .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+    display: none; /* Oculto por defecto */
+    justify-content: center;
+    align-items: center;
+
+    /* Propiedades para la animación */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease; /* Transición para el fondo */
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+    display: flex; /* O 'block' según necesites para centrar */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    text-align: center;
+    min-width: 300px;
+    position: relative;
+    /* Aquí también puedes añadir transiciones para el contenido si quieres que suba/baje */
+    transform: translateY(-20px); /* Ejemplo: empieza un poco más abajo */
+    transition: transform 0.3s ease; /* Transición para el contenido */
+}
+
+.modal.show .modal-content {
+    transform: translateY(0); /* Vuelve a su posición normal */
+}
+
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+
+<body>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gabeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    {% if user_role == 'admin' %}
+                    <a href="/costeos">Costeos de manufactura</a>
+                    {% endif %}
+                <!--<a href="/papeleria">Papeleria</a>-->
+                </div>
+            </li>
+            
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            {%if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main>
+        <h2 id="formTitle">Registro de gabetas - Almacen</h2>
+
+        <div id="toastContainer" class="toast-container"></div>
+
+        <div>
+            <form id="gambetaForm">
+                <section class="form-section">
+                    <input type="hidden" id="gambetaId"> <div> 
+                        <label for="tipo_gambeta">Zona gabeta</label>
+                        <select id="tipo_gambeta" name="tipo_gambeta" required>
+                            <option value="">Seleccionar</option>
+                            <option value="Gambeta 1">Gabeta 1</option>
+                            <option value="Gambeta 2">Gabeta 2</option>
+                            <option value="Gambeta 3">Gabeta 3</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="nombre_producto">Nombre del producto/pieza</label>
+                        <input type="text" id="nombre_producto" name="nombre_producto" required>
+                    </div>
+
+                    <div>
+                        <label for="nivel">Nivel</label>
+                        <select id="nivel" name="nivel" required>
+                            <option value="">Seleccionar</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="codigo">Código</label>
+                        <input type="text" id="codigo" name="codigo">
+                    </div>
+
+                    <div>
+                        <label for="cantidad_prestada">Cantidad a prestar</label>
+                        <input type="number" id="cantidad_prestada" name="cantidad_prestada" min="0" required>
+                    </div>
+
+                    <div>
+                        <label for="vu_pesos">VU en pesos (Opcional)</label>
+                        <input type="number" id="vu_pesos" name="vu_pesos" min="0" step="0.01">
+                    </div>
+
+                    <div>
+                        <label for="minimo">Mínimo</label>
+                        <input type="number" id="minimo" name="minimo" min="0">
+                    </div>
+
+                    <div>
+                        <label for="maximo">Máximo</label>
+                        <input type="number" id="maximo" name="maximo" min="0">
+                    </div>
+
+                    <div>
+                        <label for="cantidad_actual">Cantidad actual</label>
+                        <input type="number" id="cantidad_actual" name="cantidad_actual" min="0">
+                    </div>
+                </section>
+                <div class="form-buttons">
+                    <button type="submit">Guardar gabeta</button>
+                    <button type="button" id="cancelEdit" class="accion-btn cancel hidden">Cancelar Edición</button>
+                </div>
+            </form>
+        </div>
+
+        <section class="form-buttons">
+            <section class="form-section">
+                <h3>Buscar Piezas/Material</h3>
+                <input type="text" id="searchGambetaInput" placeholder="Buscar por Código...">
+                <button id="clearSearchBtn">Limpiar</button>
+            </section>
+        </section>
+
+        <div>
+            <h2>Piezas/Material Guardados</h2>
+            <table id="tablaDatos">
+                <thead>
+                    <tr>
+                        <th>Gabeta</th>
+                        <th>Producto/Pieza</th>
+                        <th>Nivel</th>
+                        <th>Código</th>
+                        <th>Cantidad Prestada</th>
+                        <th>VU</th>
+                        <th>Mínimo</th>
+                        <th>Máximo</th>
+                        <th>Cantidad Actual</th>
+                        <th>Disponibilidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="gambetasTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="gambetaBarcodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeGambetaBarcodeModal()">&times;</span>
+        <div id="gambetaBarcodeContent" style="text-align: center;">
+            <h4>Código de Barras de Gabeta</h4>
+            <p><strong>Zona de Gabeta:</strong> <span id="gambeta-barcode-tipo_gambeta"></span></p>
+            <p><strong>Nombre del Producto:</strong> <span id="gambeta-barcode-nombre_producto"></span></p>
+            <p><strong>Nivel:</strong> <span id="gambeta-barcode-nivel"></span></p>
+            <p><strong>Código:</strong> <span id="gambeta-barcode-codigo"></span></p>
+            <p><strong>Cantidad Actual:</strong> <span id="gambeta-barcode-cantidad_actual"></span></p>
+            <canvas id="gambetaBarcodeCanvas"></canvas>
+            <div style="margin-top: 20px;">
+                <button onclick="printGambetaBarcode()" class="accion-btn imprimir">Imprimir</button>
+                <button onclick="saveGambetaBarcodeAs()" class="accion-btn imprimir">Guardar JPG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar esta gabeta?</p>
+            <div>
+                <button id="confirmDeleteBtn" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeModal()" class="accion-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bwip-js@latest/dist/bwip-js.min.js"></script>
+    <script>   
+    const USER_ROLE = "{{ user_role }}"; 
+
+        // Declaración de variables, asegurando que se obtienen los elementos
+        const gambetaForm = document.getElementById('gambetaForm');
+        const gambetaIdInput = document.getElementById('gambetaId'); // Nuevo campo oculto para el ID
+        const formTitle = document.getElementById('formTitle');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const gambetasTableBody = document.getElementById('gambetasTableBody'); // Cambiado de 'cuerpo-tabla-gambetas'
+        const searchGambetaInput = document.getElementById('searchGambetaInput'); // Cambiado de 'busqueda-gambeta'
+        const clearSearchBtn = document.getElementById('clearSearchBtn'); // Nuevo botón de limpiar búsqueda
+        const toastContainer = document.getElementById('toastContainer'); // Contenedor de mensajes toast
+
+        // Modal elements
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let gambetaToDeleteId = null; // Variable para almacenar el ID de la gambeta a eliminar
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileToggle = document.querySelector('.profile-toggle');
+            const profileContainer = document.querySelector('.profile-menu-container-top-right');
+            const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+            if (profileToggle && profileMenu && profileContainer) {
+                profileToggle.addEventListener('click', () => {
+                    // Oculta/Muestra el menú usando la clase 'hidden'
+                    profileMenu.classList.toggle('hidden'); 
+                    // Añade/Remueve la clase 'active' para girar el icono de la flecha
+                    profileContainer.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+
+            fetchGambetas(); // Cargar gambetas al cargar la página
+
+            if (gambetaForm) {
+                gambetaForm.addEventListener('submit', async (e) => {
+                    e.preventDefault(); // Previene el envío del formulario por defecto
+                    await saveGambeta(); // Llama a la función para guardar/actualizar la gambeta
+                });
+            } else {
+                console.error("Error: El elemento 'gambetaForm' no se encontró en el DOM.");
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', clearForm);
+            } else {
+                console.error("Error: El elemento 'cancelEditBtn' no se encontró en el DOM.");
+            }
+            
+            if (searchGambetaInput) {
+                searchGambetaInput.addEventListener('input', searchGambetas);
+            } else {
+                console.error("Error: El elemento 'searchGambetaInput' no se encontró en el DOM.");
+            }
+
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
+                    if (searchGambetaInput) searchGambetaInput.value = '';
+                    fetchGambetas();
+                });
+            } else {
+                console.error("Error: El elemento 'clearSearchBtn' no se encontró en el DOM.");
+            }
+            
+            if (gambetasTableBody) {
+                gambetasTableBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) {
+                        const id = e.target.dataset.id;
+                        editGambeta(id);
+                    } else if (e.target.classList.contains('delete-btn')) {
+                        const id = e.target.dataset.id;
+                        openModal(id);
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'gambetasTableBody' no se encontró en el DOM.");
+            }
+
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (gambetaToDeleteId) {
+                        await performDeleteGambeta(); // Cambiado para llamar a la función de eliminación real
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'confirmDeleteBtn' no se encontró en el DOM.");
+            }
+
+            // Toggle para el menú desplegable (si tienes uno en tu nav)
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function() {
+                    const dropdownMenu = this.nextElementSibling;
+                    if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                });
+            }
+        });
+
+        // Función para mostrar mensajes como "toast"
+        function showMessage(message, type) {
+            if (!toastContainer) {
+                console.error("Error: El elemento 'toastContainer' no se encontró en el DOM. Mensaje: " + message);
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            // Eliminar el toast después de 5 segundos (coincide con la duración de la animación CSS)
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Función para abrir el modal de confirmación
+        function openModal(id) {
+            gambetaToDeleteId = id;
+            if (deleteConfirmModal) {
+                deleteConfirmModal.style.display = 'flex';
+                setTimeout(() => {
+                    deleteConfirmModal.classList.add('show');
+                }, 10);
+            } else {
+                console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+            }
+        }
+
+        // Función para cerrar el modal de confirmación
+        function closeModal() {
+            if (deleteConfirmModal) {
+                deleteConfirmModal.classList.remove('show');
+                setTimeout(() => {
+                deleteConfirmModal.style.display = 'flex';
+                gambetaToDeleteId = null;
+                },300);
+            } else {
+                console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+            }
+        }
+
+        // --- Lógica Específica para Gambetas ---
+
+        // Función para obtener y mostrar todas las gambetas
+        async function fetchGambetas() {
+            try {
+                const response = await fetch('/obtener_gambetas');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const gambetas = await response.json();
+                renderTable(gambetas);
+            } catch (error) {
+                console.error('Error al obtener gambetas:', error);
+                showMessage('Error al cargar las gambetas.', 'error');
+            }
+        }
+
+        // Función para renderizar la tabla de gambetas
+        function renderTable(gambetas) {
+            if (!gambetasTableBody) {
+                console.error("Error: El elemento 'gambetasTableBody' no se encontró en el DOM, no se puede renderizar la tabla.");
+                return;
+            }
+            gambetasTableBody.innerHTML = ''; 
+            // ID, Gambeta, Producto/Pieza, Nivel, Código, Cantidad Prestada, VU, Mínimo, Máximo, Cantidad Actual, Disponibilidad, Acciones
+            const totalColumns = 11; 
+
+            if (gambetas.length === 0) {
+                const row = gambetasTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = totalColumns;
+                cell.textContent = 'No hay gambetas registradas.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+
+            gambetas.forEach((item) => {
+                const row = gambetasTableBody.insertRow();
+                const cantidadActual = item[9] !== null ? parseInt(item[9]) : 0;
+                const minimo = item[7] !== null ? parseInt(item[7]) : 0;
+                const maximo = item[8] !== null ? parseInt(item[8]) : 0;
+
+                let disponibilidadTexto = 'N/A';
+                let disponibilidadClass = '';
+
+                if (cantidadActual === 0) { // Prioridad 1: Cantidad actual es 0
+                    disponibilidadTexto = 'No disponible';
+                    disponibilidadClass = 'no-disponible';
+                } else if (cantidadActual < minimo) { // Prioridad 2: Menor que el mínimo
+                    disponibilidadTexto = 'Bajo Stock';
+                    disponibilidadClass = 'bajo-stock';
+                } else if (cantidadActual > maximo) { // Prioridad 3: Mayor que el máximo
+                    disponibilidadTexto = 'Sobre Stock';
+                    disponibilidadClass = 'sobre-stock';
+                } else { // Si no es 0, no es menor que mínimo, y no es mayor que máximo, entonces está dentro del rango
+                    disponibilidadTexto = 'Disponible';
+                    disponibilidadClass = 'disponible';
+                }
+
+
+                row.innerHTML = `
+                    <td>${item[1]}</td> 
+                    <td>${item[2]}</td> 
+                    <td>${item[3]}</td> 
+                    <td>${item[4] || 'N/A'}</td> <td>${item[5]}</td> 
+                    <td>$${(item[6] !== null ? parseFloat(item[6]).toFixed(2) : 'N/A')}</td> 
+                    <td>${item[7] !== null ? item[7] : 'N/A'}</td> 
+                    <td>${item[8] !== null ? item[8] : 'N/A'}</td> 
+                    <td>${item[9] !== null ? item[9] : 'N/A'}</td> 
+                    <td class="${disponibilidadClass}">${disponibilidadTexto}</td>
+                    <td>
+                        <button class="accion-btn edit-btn" data-id="${item[0]}">Editar</button>
+                        
+                        ${USER_ROLE !== 'employee' ? 
+                            `<button class="accion-btn delete-btn" data-id="${item[0]}">Eliminar</button>` 
+                            : 
+                            // Si es 'employee', no se renderiza nada en su lugar.
+                            ''
+                        }
+                        
+                        <button class="accion-btn code-btn" onclick = "showGambetaBarcodeModal(${item[0]})">Codigo de barras</button>
+                    </td>
+
+                `;
+            });
+        }
+
+        // Función para guardar o actualizar gambeta
+        async function saveGambeta() {
+            // Referencias a los elementos del formulario
+            const tipoGambetaEl = document.getElementById('tipo_gambeta');
+            const nombreProductoEl = document.getElementById('nombre_producto');
+            const nivelEl = document.getElementById('nivel');
+            const codigoEl = document.getElementById('codigo');
+            const cantidadPrestadaEl = document.getElementById('cantidad_prestada');
+            const vuPesosEl = document.getElementById('vu_pesos');
+            const minimoEl = document.getElementById('minimo');
+            const maximoEl = document.getElementById('maximo');
+            const cantidadActualEl = document.getElementById('cantidad_actual');
+
+            // Verificaciones defensivas para los elementos requeridos
+            if (!gambetaIdInput || !tipoGambetaEl || !nombreProductoEl || !nivelEl || !cantidadPrestadaEl) {
+                showMessage('Error: Faltan campos requeridos (Tipo de Gambeta, Nombre de Producto, Nivel, Cantidad a Prestar).', 'error');
+                return;
+            }
+            
+            const cantidadPrestada = parseInt(cantidadPrestadaEl.value);
+            // Si cantidadActualEl no existe o su valor es vacío, se usa 0 para la validación interna
+            const cantidadActual = cantidadActualEl && cantidadActualEl.value !== '' ? parseInt(cantidadActualEl.value) : 0; 
+            const minimo = minimoEl && minimoEl.value !== '' ? parseInt(minimoEl.value) : 0;
+            // Usar un valor muy grande (Infinity) si el máximo es opcional y no se especifica
+            const maximo = maximoEl && maximoEl.value !== '' ? parseInt(maximoEl.value) : Infinity; 
+
+            if (isNaN(cantidadPrestada) || cantidadPrestada < 0) { // Cantidad prestada debe ser 0 o más
+                showMessage("Por favor, ingrese una cantidad válida a prestar (numérica y no negativa).", "error");
+                return;
+            }
+
+            // Validación de cantidad a prestar vs. cantidad actual
+            if (cantidadPrestada > cantidadActual) {
+                showMessage("No hay suficiente cantidad disponible para prestar.", "error");
+                return;
+            }
+            
+            // Validación de cantidad actual vs. máximo (solo advertencia, no bloqueo)
+            if (cantidadActual > maximo) {
+                showMessage("Advertencia: La cantidad actual excede el máximo permitido.", "info");
+                // No retornamos, permitimos que se guarde con advertencia
+            }
+
+            const id = gambetaIdInput.value;
+            const url = id ? `/actualizar_gambeta/${id}` : '/guardar_gambeta';
+            const method = 'POST';
+
+            const data = {
+                tipo_gambeta: tipoGambetaEl.value,
+                nombre_producto: nombreProductoEl.value,
+                nivel: nivelEl.value,
+                codigo: codigoEl ? codigoEl.value : '',
+                cantidad_prestada: cantidadPrestada,
+                // Para valores opcionales, si el campo está vacío, enviamos null
+                vu_pesos: vuPesosEl && vuPesosEl.value !== '' ? parseFloat(vuPesosEl.value) : null,
+                minimo: minimoEl && minimoEl.value !== '' ? parseInt(minimoEl.value) : null,
+                maximo: maximoEl && maximoEl.value !== '' ? parseInt(maximoEl.value) : null,
+                cantidad_actual: cantidadActualEl && cantidadActualEl.value !== '' ? parseInt(cantidadActualEl.value) : null
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message || 'Operación exitosa.', 'success');
+                    clearForm();
+                    fetchGambetas();
+                } else {
+                    showMessage(result.message || 'Error en la operación.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al guardar/actualizar la gambeta:', error);
+                showMessage('Error de conexión o servidor.', 'error');
+            }
+        }
+
+        // Función para cargar los datos de una gambeta en el formulario para edición
+        async function editGambeta(id) {
+            try {
+                const response = await fetch(`/obtener_gambeta/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const gambeta = await response.json();
+                
+                // Asignar valores a los campos del formulario
+                if (gambetaIdInput) gambetaIdInput.value = gambeta[0];
+                if (document.getElementById('tipo_gambeta')) document.getElementById('tipo_gambeta').value = gambeta[1];
+                if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = gambeta[2];
+                if (document.getElementById('nivel')) document.getElementById('nivel').value = gambeta[3];
+                if (document.getElementById('codigo')) document.getElementById('codigo').value = gambeta[4] || '';
+                if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = gambeta[5];
+                // Asegurarse de que los valores nulos no se muestren como 'null' en los inputs
+                if (document.getElementById('vu_pesos')) document.getElementById('vu_pesos').value = gambeta[6] !== null ? gambeta[6] : '';
+                if (document.getElementById('minimo')) document.getElementById('minimo').value = gambeta[7] !== null ? gambeta[7] : '';
+                if (document.getElementById('maximo')) document.getElementById('maximo').value = gambeta[8] !== null ? gambeta[8] : '';
+                if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = gambeta[9] !== null ? gambeta[9] : '';
+
+                if (formTitle) formTitle.textContent = 'Editar Gambeta'; 
+                if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+                
+                // Recargar información del producto después de cargar la gambeta para edición
+
+            } catch (error) {
+                console.error('Error al obtener la gambeta para edición:', error);
+                showMessage('Error al cargar los datos de la gambeta para edición.', 'error');
+            }
+        }
+
+        // Función para eliminar una gambeta (abre el modal)
+        async function deleteGambeta(id) {
+            gambetaToDeleteId = id; // Almacenar el ID
+            openModal(id); // Abrir el modal de confirmación
+        }
+        
+        // La función que realmente ejecuta la eliminación
+        async function performDeleteGambeta() {
+            try {
+                const id = gambetaToDeleteId; // Obtener el ID de la variable global
+                const response = await fetch(`/eliminar_gambeta/${id}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage(result.message || 'Gambeta eliminada correctamente.', 'success');
+                    fetchGambetas();
+                } else {
+                    showMessage(result.message || 'Error al eliminar la gambeta.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al eliminar la gambeta:', error);
+                showMessage('Error de conexión al intentar eliminar la gambeta.', 'error');
+            } finally {
+                closeModal(); // Asegurarse de cerrar el modal
+                gambetaToDeleteId = null; // Limpiar el ID
+            }
+        }
+
+        // Función para buscar gambetas por Código
+        async function searchGambetas() {
+            if (!searchGambetaInput) {
+                console.error("Error: El elemento 'searchGambetaInput' no se encontró en el DOM, no se puede buscar.");
+                return;
+            }
+            const searchTerm = searchGambetaInput.value.trim();
+            try {
+                const response = await fetch(`/buscar_gambetas?q=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const gambetas = await response.json();
+                renderTable(gambetas);
+            } catch (error) {
+                console.error('Error al buscar gambetas:', error);
+                showMessage('Error al buscar gambetas.', 'error');
+            }
+        }
+
+        // Función para mostrar el modal del código de barras de Gambeta
+// Función para mostrar el modal del código de barras de Gambeta
+function showGambetaBarcodeModal(id) {
+    // Aquí necesitas una forma de obtener los datos de la gambeta por su ID
+    // Suponiendo que tienes una función similar a 'obtener_gambeta' en tu backend
+    fetch(`/obtener_gambeta/${id}`)
+        .then(response => response.json())
+        .then(gambeta => {
+            if (!gambeta) {
+                showMessage("Gambeta no encontrada.", "error");
+                return;
+            }
+
+            // Primero, haz el modal visible inmediatamente para asegurar que el canvas tenga un tamaño
+            const gambetaBarcodeModal = document.getElementById('gambetaBarcodeModal');
+            if (gambetaBarcodeModal) {
+                gambetaBarcodeModal.style.display = 'flex';
+                void gambetaBarcodeModal.offsetWidth; // Fuerza el reflow
+                gambetaBarcodeModal.classList.add('show');
+            }
+
+            // Actualizar el contenido del modal
+            document.getElementById('gambeta-barcode-tipo_gambeta').textContent = gambeta[1] || 'N/A';
+            document.getElementById('gambeta-barcode-nombre_producto').textContent = gambeta[2] || 'N/A';
+            document.getElementById('gambeta-barcode-nivel').textContent = gambeta[3] || 'N/A';
+            document.getElementById('gambeta-barcode-codigo').textContent = gambeta[4] || 'N/A';
+            document.getElementById('gambeta-barcode-cantidad_actual').textContent = gambeta[9] !== null ? gambeta[9] : 'N/A';
+
+            // Generar el código de barras ahora que el modal está visible
+            const canvasElement = document.getElementById('gambetaBarcodeCanvas');
+            if (canvasElement) {
+                try {
+                    const barcodeValue = String(gambeta[4] || '').trim();
+                    if (barcodeValue.length > 0) {
+                        bwipjs.toCanvas(canvasElement, {
+                            bcid: 'code128',
+                            text: barcodeValue,
+                            scale: 2,
+                            height: 10,
+                            includetext: true,
+                            textxalign: 'center',
+                        });
+                    } else {
+                        // Muestra un mensaje en el canvas si no hay código
+                        const ctx = canvasElement.getContext('2d');
+                        ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                        ctx.font = "14px Arial";
+                        ctx.fillStyle = "red";
+                        ctx.textAlign = "center";
+                        ctx.fillText("No hay código válido", canvasElement.width / 2, canvasElement.height / 2);
+                    }
+                } catch (e) {
+                    console.error("Error al generar el código de barras:", e);
+                    const ctx = canvasElement.getContext('2d');
+                    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                    ctx.font = "14px Arial";
+                    ctx.fillStyle = "red";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Error de generación", canvasElement.width / 2, canvasElement.height / 2);
+                }
+            } else {
+                console.error("Error: El elemento con ID 'gambetaBarcodeCanvas' no se encontró en el DOM.");
+            }
+        })
+        .catch(error => {
+            console.error('Error al obtener la gambeta para el código de barras:', error);
+            showMessage('Error al cargar los datos de la gambeta para el código de barras.', 'error');
+        });
+}
+// Función para cerrar el modal del código de barras de Gambeta
+function closeGambetaBarcodeModal() {
+    const modal = document.getElementById('gambetaBarcodeModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Función para imprimir el código de barras de Gambeta
+function printGambetaBarcode() {
+    setTimeout(() => {
+        const canvas = document.getElementById('gambetaBarcodeCanvas');
+        if (!canvas) {
+            console.error("El elemento canvas no fue encontrado para imprimir.");
+            return;
+        }
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            showMessage("Por favor, permite las ventanas emergentes para imprimir.", "error");
+            return;
+        }
+
+        const imgWidth = 170; // Ancho deseado para la impresión (ajusta según necesites)
+        const imgHeight = canvas.height * (imgWidth / canvas.width); // Mantenemos la proporción
+
+
+        printWindow.document.write('<!DOCTYPE html>');
+        printWindow.document.write('<html>');
+        printWindow.document.write('<head>');
+        printWindow.document.write('<title>Imprimir Código de Barras Gambeta</title>');
+        printWindow.document.write('<style>\
+                body { text-align: center; margin: 0; padding: 0; } \
+                img { width: ' + imgWidth + 'px; height: ' + imgHeight + 'px; max-width: 100%; } \
+                @media print {\
+                    @page { size: auto; margin: 0; } \
+                    img { page-break-inside: avoid; } \
+                }\
+            </style>');
+        printWindow.document.write('</head>');
+        printWindow.document.write('<body>');
+        printWindow.document.write('<img src="' + dataUrl + '" alt="Código de Barras Gambeta">');
+        printWindow.document.write('<script>');
+        printWindow.document.write('window.onload = function() { window.print(); window.close(); };');
+        printWindow.document.write('</' + 'script>');
+        printWindow.document.write('</body>');
+        printWindow.document.write('</html>');
+        printWindow.document.close();
+    }, 50);
+}
+
+// Función para guardar el código de barras de Gambeta como JPG
+function saveGambetaBarcodeAs() {
+    setTimeout(() => {
+        const canvas = document.getElementById('gambetaBarcodeCanvas');
+        if (!canvas) {
+            console.error("El elemento canvas no fue encontrado.");
+            return;
+        }
+
+        const dataURL = canvas.toDataURL('image/jpeg', 1.0);
+        const link = document.createElement('a');
+        link.download = `codigo_de_barras_gambeta.jpeg`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }, 50);
+}
+
+        // Función para limpiar el formulario y volver al modo de agregar
+        function clearForm() {
+            if (gambetaForm) gambetaForm.reset();
+            if (gambetaIdInput) gambetaIdInput.value = '';
+            if (formTitle) formTitle.textContent = 'Registro de Gambetas'; 
+            if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+
+            // Limpiar campos individuales para mayor seguridad y consistencia
+            if (document.getElementById('tipo_gambeta')) document.getElementById('tipo_gambeta').value = '';
+            if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = '';
+            if (document.getElementById('nivel')) document.getElementById('nivel').value = '';
+            if (document.getElementById('codigo')) document.getElementById('codigo').value = '';
+            if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = '';
+            if (document.getElementById('vu_pesos')) document.getElementById('vu_pesos').value = '';
+            if (document.getElementById('minimo')) document.getElementById('minimo').value = '';
+            if (document.getElementById('maximo')) document.getElementById('maximo').value = '';
+            if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = '';
+            
+            // Asegurarse de que la información de producto se recargue/limpie al limpiar el formulario
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Indicador de cumplimiento</title>
+    <style>
+            .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* Propiedades para la animación */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        /* La clase `show` activará la visibilidad y opacidad */
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        max-width: 400px;
+        min-width: 300px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+        #toastContainer {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1001;
+    }
+    
+    .toast {
+        min-width: 250px;
+        max-width: 400px;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .toast.show {
+        animation: slideIn 0.5s forwards;
+    }
+    
+    .toast.hide {
+        animation: fadeOut 0.5s forwards;
+    }
+
+    .toast.info {
+        background-color: #2196F3; /* Azul */
+    }
+    
+    .toast.success {
+        background-color: #4CAF50; /* Verde */
+    }
+    
+    .toast.error {
+        background-color: #F44336; /* Rojo */
+    }    .legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    font-size: 1.1em;
+    }
+
+         @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+                <div id="piezas-menu" class="dropdown-menu">
+                    <a href="/lista_numeros_de_parte_y_piezas_por_barra">Numeros de parte</a>
+                    <a href="/eficiencia">Eficiencia</a>
+                    <a href="/disponibilidad">Disponibilidad</a>
+                    <a href="/oee">OEE</a>
+                    <a href="/tiempo_muerto_scrap">Tiempo muerto</a>
+                </div>
+            </li>
+            {% if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main>
+        <h2>Cumplimiento de eficiencia tornos - Produccion</h2>
+        
+        <section class="form-section">
+            <div>
+                <label for="maquina">Maquina:</label>
+                <input type="text" id="maquina">
+            </div>
+            <div>
+                <label for="noParteInterno">No. parte interno</label>
+                <select id="noParteInterno">
+                    <option value="">-- Selecciona no. parte interno --</option>
+                </select>
+            </div>
+            <div>
+                <label for="nombreOperador">Operador:</label>
+                <input type="text" id="nombreOperador">
+            </div>
+            <div>
+                <label for="programado">Piezas programadas:</label>
+                <input type="number" id="programado">
+            </div>
+            <div>
+                <label for="real">Piezas reales:</label>
+                <input type="number" id="real">
+            </div>
+            <div>
+                <label for="scrap">Scrap:</label>
+                <input type="number" id="scrap">
+            </div>
+            <div>
+                <label for="fecha">Fecha que se realizo</label>
+                <input type="date" id="fecha">
+            </div>
+        </section>
+        <div class="form-buttons">
+            <button id="guardarEficienciaBtn" onclick="guardarEficiencia()">Guardar datos</button>
+            <button id="cargarDatosBtn" class="accion-btn cancel-btn" onclick="openLoadModal()">Cargar datos</button>
+        </div>
+
+
+        <h3>Datos guardados</h3>
+        <table id="tablaEficiencia">
+    <thead id="tablaEncabezado">
+        <tr>
+            <th>Maquina</th>
+            <th id="th-Lunes">Lunes</th>
+            <th id="th-Martes">Martes</th>
+            <th id="th-Miercoles">Miércoles</th>
+            <th id="th-Jueves">Jueves</th>
+            <th id="th-Viernes">Viernes</th>
+            <th id="th-Sabado">Sábado</th>
+            <th>Acumulado</th>
+            <th>Desempeño</th>
+            <th>Bono</th>
+
+            <th>ACCIONES</th>
+        </tr>
+        <tr id="fechaHeaderRow">
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+
+        </tr>
+    </thead>
+    <tbody>
+        </tbody>
+</table> 
+
+<h3>Total semanal de eficiencia de tornos</h3>
+<table id="tablaTotalSemanal">
+    <thead>
+        <tr>
+            <th>Bono Semanal</th>
+            <th>% Disponibilidad Maquinas Semanal</th>
+            <th>% Eficiencia Semanal</th>
+            <th>% Calidad Semanal</th>
+            <th>% Scrap Semanal</th>
+            <th>Produccion Real Semanal</th>
+            <th>Produccion Programada Semanal</th>
+        </tr>
+    </thead>
+    <tbody>
+        </tbody>
+</table>
+    </main>
+    <div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirmar Eliminación</h3>
+        <p>Selecciona el registro que deseas eliminar para la máquina <strong id="deleteMachineName"></strong>:</p>
+        
+        <label for="deleteDaySelect">Día:</label>
+        <select id="deleteDaySelect" class="input-field">
+            </select>
+        
+        <div class="modal-buttons">
+            <button id="cancelDeleteBtn" class="accion-btn code-btn">Cancelar</button>
+            <button id="confirmDeleteBtn" class="accion-btn delete-btn">Continuar</button>
+        </div>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Selecciona Registro a Editar</h3>
+        <p>Selecciona el registro que deseas editar para la máquina <strong id="editMachineName"></strong>:</p>
+        
+        <label for="editDaySelect">Día:</label>
+        <select id="editDaySelect" class="input-field">
+            </select>
+        
+        <div class="modal-buttons">
+            <button id="confirmEditBtn" class="accion-btn confirm-btn">Continuar</button>
+            <button id="cancelEditBtn" class="accion-btn cancel-btn">Cancelar</button>
+        </div>
+    </div>
+</div><div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirmar eliminación</h3>
+        <p>¿Estás seguro de que quieres eliminar este registro?</p>
+        <div class="modal-buttons">
+            <button id="confirmDeleteBtn" onclick="confirmarEliminacion()">Eliminar</button>
+            <button id="cancelDeleteBtn">Cancelar</button>
+        </div>
+    </div>
+</div>
+    <div id="loadModal" class="modal">
+        <div class="modal-content">
+            <h3>Selecciona los datos correspondientes:</h3>
+            <div>
+                <label for="anioSelect">Año:</label>
+                <select id="anioSelect">
+                    <option value="">-- Selecciona un año --</option>
+                </select>
+            </div>
+            <div>
+                <label for="semanaSelect">Semana:</label>
+                <select id="semanaSelect" disabled>
+                    <option value="">-- Selecciona una semana --</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmLoadBtn" class="accion-btn confirm-btn">Continuar</button>
+                <button id="cancelLoadBtn" class="accion-btn cancel-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+<div id="toastContainer"></div>
+    <script>
+        // Variable global para almacenar los datos de la tabla.
+
+// Días de la semana para iterar en el orden correcto
+const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const diasLaborales = diasSemana.slice(1, 7); // De Lunes (índice 1) a Sábado (índice 6)
+
+// Función para mostrar mensajes "toast"
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.classList.add('toast', type);
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+        }, { once: true });
+    }, 5000);
+}
+
+// Función para obtener los números de parte desde el servidor
+async function obtenerNumerosDeParte() {
+    try {
+        const response = await fetch('/obtener_parte_pieza_interno');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const numerosDeParte = await response.json();
+        
+        const select = document.getElementById('noParteInterno');
+        select.innerHTML = '<option value="">-- Selecciona no. parte interno --</option>';
+        
+        numerosDeParte.forEach(numero => {
+            const option = document.createElement('option');
+            option.value = numero;
+            option.textContent = numero;
+            select.appendChild(option);
+        });
+
+    } catch (e) {
+        console.error("No se pudieron cargar los números de parte:", e);
+        showToast("Error al cargar números de parte.", "error");
+    }
+}
+
+// Se ejecuta cuando la página carga
+window.onload = function() {
+    obtenerNumerosDeParte();
+    mostrarDatosEnTabla();
+    cargarDatosEficiencia(); // <-- Nueva función para cargar desde el servidor
+};
+
+    // Función para obtener los años únicos con registros de eficiencia
+    async function populateAnios() {
+        const anioSelect = document.getElementById('anioSelect');
+        try {
+            const response = await fetch('/obtener_anios_eficiencia');
+            const anios = await response.json();
+            anioSelect.innerHTML = '<option value="">-- Selecciona un año --</option>';
+            anios.forEach(anio => {
+                const option = document.createElement('option');
+                option.value = anio;
+                option.textContent = anio;
+                anioSelect.appendChild(option);
+            });
+        } catch (error) {
+            showToast("Error al cargar la lista de años.", "error");
+        }
+    }
+
+    // Función para obtener las semanas únicas de un año específico
+    async function populateSemanas(anio) {
+        const semanaSelect = document.getElementById('semanaSelect');
+        try {
+            const response = await fetch(`/obtener_semanas_por_anio/${anio}`);
+            const semanas = await response.json();
+            semanaSelect.innerHTML = '<option value="">-- Selecciona una semana --</option>';
+            semanas.forEach(semana => {
+                const option = document.createElement('option');
+                option.value = semana;
+                option.textContent = `Semana ${semana}`;
+                semanaSelect.appendChild(option);
+            });
+            semanaSelect.disabled = false;
+        } catch (error) {
+            showToast("Error al cargar las semanas para el año seleccionado.", "error");
+        }
+    }
+    
+    // Función para cargar y mostrar los datos de una semana y año específicos
+    async function cargarDatosSemanaAnio(anio, semana) {
+        try {
+            const response = await fetch(`/obtener_eficiencias_semanal/${anio}/${semana}`);
+            if (!response.ok) {
+                throw new Error('Error al cargar datos del servidor.');
+            }
+            const data = await response.json();
+            eficienciaData = data; // Actualiza el array global
+            mostrarDatosEnTabla();
+        } catch (error) {
+            console.error("Error al cargar los datos:", error);
+            showToast("Error al cargar los datos de eficiencia.", "error");
+        }
+    }
+
+
+// Nueva función para cargar y mostrar los datos de eficiencia desde el servidor
+let eficienciaData = []; // Ahora es un array para almacenar los registros del servidor.
+
+async function cargarDatosEficiencia() {
+    try {
+        const response = await fetch('/obtener_eficiencias');
+        if (!response.ok) {
+            throw new Error('Error al cargar datos del servidor.');
+        }
+        const data = await response.json();
+        eficienciaData = data; // Almacena los datos en el array global
+        mostrarDatosEnTabla();
+    } catch (error) {
+        console.error("Error al cargar los datos:", error);
+        showToast("Error al cargar los datos de eficiencia. Intenta recargar la página.", "error");
+    }
+}
+
+async function guardarEficiencia() {
+    const maquina = document.getElementById('maquina').value;
+    const noParteInterno = document.getElementById('noParteInterno').value;
+    const nombreOperador = document.getElementById('nombreOperador').value;
+    const programado = document.getElementById('programado').value;
+    const real = document.getElementById('real').value;
+    const scrap = document.getElementById('scrap').value;
+    const fechaInput = document.getElementById('fecha').value;
+
+    if (!maquina || !noParteInterno || !nombreOperador || !programado || !real || !scrap || !fechaInput) {
+        showToast("Por favor, llena todos los campos del formulario.", "error");
+        return;
+    }
+
+    const payload = {
+        maquina: maquina,
+        noParteInterno: noParteInterno,
+        nombreOperador: nombreOperador,
+        programado: parseFloat(programado),
+        real: parseFloat(real),
+        scrap: parseFloat(scrap),
+        fecha: fechaInput
+    };
+
+    try {
+        const url = document.getElementById('guardarEficienciaBtn').textContent.includes('Actualizar') ? `/actualizar_eficiencia/${eficienciaData.editId}` : '/guardar_eficiencia';
+        const method = 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast(result.message, 'success');
+            limpiarFormulario();
+            cargarDatosEficiencia();
+        } else {
+            throw new Error(result.message || 'Error desconocido.');
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+function limpiarFormulario() {
+    document.getElementById('maquina').value = '';
+    document.getElementById('noParteInterno').value = '';
+    document.getElementById('nombreOperador').value = '';
+    document.getElementById('programado').value = '';
+    document.getElementById('real').value = '';
+    document.getElementById('scrap').value = '';
+    document.getElementById('fecha').value = '';
+    document.getElementById('guardarEficienciaBtn').textContent = 'Guardar datos';
+}
+// --- FUNCIONES PARA MANEJAR LOS MODALES ---
+
+function openModal(modalElement) {
+    modalElement.style.display = 'flex';
+    void modalElement.offsetWidth;
+    modalElement.classList.add('show');
+}
+
+function closeModal(modalElement) {
+    modalElement.classList.remove('show');
+    setTimeout(() => {
+        modalElement.style.display = 'none';
+    }, 300);
+}
+
+const loadModal = document.getElementById('loadModal');
+    const anioSelect = document.getElementById('anioSelect');
+    const semanaSelect = document.getElementById('semanaSelect');
+
+    // Función que abre el modal de carga y llena el selector de años
+    function openLoadModal() {
+        openModal(loadModal);
+        populateAnios();
+    }
+    
+    // Event listener para el selector de Año
+    anioSelect.addEventListener('change', (e) => {
+        const selectedAnio = e.target.value;
+        if (selectedAnio) {
+            populateSemanas(selectedAnio);
+        } else {
+            semanaSelect.innerHTML = '<option value="">-- Selecciona una semana --</option>';
+            semanaSelect.disabled = true;
+        }
+    });
+
+    // Event listener para el botón "Continuar" del modal
+    document.getElementById('confirmLoadBtn').addEventListener('click', async () => {
+        const selectedAnio = anioSelect.value;
+        const selectedSemana = semanaSelect.value;
+
+        if (!selectedAnio || !selectedSemana) {
+            showToast("Por favor, selecciona tanto el año como la semana.", "error");
+            return;
+        }
+        
+        // Llama a la nueva función para cargar los datos
+        await cargarDatosSemanaAnio(selectedAnio, selectedSemana);
+        
+        // Cierra el modal después de cargar
+        closeModal(loadModal);
+        showToast("Datos cargados con éxito.", "success");
+    });
+
+    // Event listener para el botón "Cancelar" del modal
+    document.getElementById('cancelLoadBtn').addEventListener('click', () => {
+        closeModal(loadModal);
+    });
+
+
+// La nueva función que abre el modal de confirmación
+// MODIFICA la función para que use un select en lugar de botones
+function iniciarEliminacionModal(maquina) {
+    const select = document.getElementById('deleteDaySelect');
+    select.innerHTML = ''; // Limpiar opciones anteriores
+
+    // Añade una opción predeterminada
+    const defaultOption = document.createElement('option');
+    defaultOption.textContent = '-- Selecciona un registro --';
+    defaultOption.value = '';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+    
+    // Filtra los registros para la máquina seleccionada
+    const registrosDeMaquina = eficienciaData.filter(item => item.maquina === maquina);
+    
+    // Llena el select con los registros encontrados
+    registrosDeMaquina.forEach(registro => {
+        const option = document.createElement('option');
+        
+        const fechaObj = new Date(registro.fecha + 'T00:00:00'); 
+        const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        const diaSemana = diasSemana[fechaObj.getDay()];
+
+        option.textContent = `${diaSemana} - ${fechaFormateada} (${registro.no_parte_interno})`;
+        // El valor del option debe ser el ID del registro
+        option.value = registro.id;
+        select.appendChild(option);
+    });
+    
+    // Vincula el nombre de la máquina al modal
+    document.getElementById('deleteMachineName').textContent = maquina;
+
+    // Vincula la lógica de los botones del modal
+    document.getElementById('cancelDeleteBtn').onclick = () => {
+        closeModal(document.getElementById('deleteModal'));
+    };
+    
+    document.getElementById('confirmDeleteBtn').onclick = () => {
+        const selectedId = select.value;
+        if (selectedId) {
+            // Llama a la función de confirmación real con el ID seleccionado
+            confirmarEliminacion(selectedId); 
+        } else {
+            showToast("Por favor, selecciona un registro para eliminar.", "error");
+        }
+    };
+
+    openModal(document.getElementById('deleteModal'));
+}
+
+async function confirmarEliminacion(id) {
+    // Cierra el modal
+    closeModal(document.getElementById('deleteModal'));
+
+    try {
+        const response = await fetch(`/eliminar_eficiencia/${id}`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+            showToast(result.message, 'success');
+            // Recarga los datos para actualizar la tabla
+            cargarDatosEficiencia(); 
+        } else {
+            throw new Error(result.message || 'Error desconocido.');
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+}
+
+
+// La nueva función que abre el modal de edición
+// MODIFICADA: La nueva función que abre el modal de edición
+function iniciarEdicionModal(maquina) {
+    const select = document.getElementById('editDaySelect');
+    select.innerHTML = ''; // Limpia las opciones anteriores
+
+    const registrosDeMaquina = eficienciaData.filter(item => item.maquina === maquina);
+    
+    if (registrosDeMaquina.length === 0) {
+        showToast("No hay registros para editar para esta máquina.", "error");
+        return;
+    }
+
+    const defaultOption = document.createElement('option');
+    defaultOption.textContent = '-- Selecciona un registro --';
+    defaultOption.value = '';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+
+    registrosDeMaquina.forEach(registro => {
+        const option = document.createElement('option');
+        
+        // CORRECCIÓN 1: Evitar el error de zona horaria de la fecha
+        const fechaObj = new Date(registro.fecha + 'T00:00:00'); 
+        const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        // Asume que tu array de días tiene el orden correcto
+        const diaSemana = diasSemana[fechaObj.getDay()];
+
+        option.textContent = `${diaSemana} - ${fechaFormateada} (${registro.no_parte_interno})`;
+        option.value = registro.id;
+        select.appendChild(option);
+    });
+    
+    document.getElementById('editMachineName').textContent = maquina;
+
+    document.getElementById('cancelEditBtn').onclick = () => {
+        closeModal(document.getElementById('editModal'));
+    };
+    
+    document.getElementById('confirmEditBtn').onclick = () => {
+        const selectedId = select.value;
+        if (selectedId) {
+            // CORRECCIÓN 2: Llama a la función de carga de datos
+            cargarParaEdicion(selectedId); 
+            closeModal(document.getElementById('editModal'));
+        } else {
+            showToast("Por favor, selecciona un registro para editar.", "error");
+        }
+    };
+
+    openModal(document.getElementById('editModal'));
+}
+
+// MODIFICADA: Renombrada y corregida para buscar el registro
+function cargarParaEdicion(id) {
+    // CORRECCIÓN 3: Convierte el ID a número para una comparación correcta
+    const registro = eficienciaData.find(reg => reg.id === parseInt(id));
+    if (registro) {
+        document.getElementById('maquina').value = registro.maquina;
+        document.getElementById('noParteInterno').value = registro.no_parte_interno;
+        document.getElementById('nombreOperador').value = registro.nombre_operador;
+        document.getElementById('programado').value = registro.piezas_programadas;
+        document.getElementById('real').value = registro.piezas_reales;
+        document.getElementById('scrap').value = registro.scrap;
+        document.getElementById('fecha').value = registro.fecha;
+
+        // Guarda el ID del registro que se está editando
+        eficienciaData.editId = id;
+
+        document.getElementById('guardarEficienciaBtn').textContent = 'Actualizar datos';
+        
+        showToast("Formulario cargado para editar. Modifica los campos y haz clic en 'Actualizar'.", "info");
+    } else {
+        showToast("No se encontró el registro para editar.", "error");
+    }
+}
+// MODIFICA la función mostrarDatosEnTabla()
+// Reemplaza toda tu función mostrarDatosEnTabla() con esta versión
+function mostrarDatosEnTabla() {
+    const tbody = document.getElementById('tablaEficiencia').getElementsByTagName('tbody')[0];
+    tbody.innerHTML = '';
+
+    // Agrupar los datos por máquina y semana
+    const datosAgrupados = {};
+    eficienciaData.forEach(item => {
+        const maquina = item.maquina;
+        const anio = item.anio;
+        const semana = item.semana;
+
+        if (!datosAgrupados[maquina]) {
+            datosAgrupados[maquina] = {};
+        }
+        if (!datosAgrupados[maquina][anio]) {
+            datosAgrupados[maquina][anio] = {};
+        }
+        if (!datosAgrupados[maquina][anio][semana]) {
+            datosAgrupados[maquina][anio][semana] = {};
+        }
+        // Usar el nombre del día para agrupar los datos
+        const fecha = new Date(item.fecha + 'T00:00:00'); 
+        datosAgrupados[maquina][anio][semana][diasSemana[fecha.getDay()]] = item;
+    });
+
+    const maquinas = Object.keys(datosAgrupados).sort();
+
+    maquinas.forEach(maquina => {
+        const anios = Object.keys(datosAgrupados[maquina]).sort((a, b) => parseInt(a) - parseInt(b));
+        anios.forEach(anio => {
+            const semanas = Object.keys(datosAgrupados[maquina][anio]).sort((a, b) => parseInt(a) - parseInt(b));
+            semanas.forEach(semana => {
+                const row = tbody.insertRow();
+                row.insertCell().textContent = maquina;
+
+                let totalProgramado = 0;
+                let totalReal = 0;
+                let totalScrap = 0;
+                let hayRegistros = false;
+
+                // Crear las celdas para cada día de la semana laboral
+                diasLaborales.forEach(dia => {
+                    const cell = row.insertCell();
+                    // Acceder a los datos usando el nombre del día
+                    const diaData = datosAgrupados[maquina][anio][semana][dia];
+                    
+                    if (diaData) {
+                        hayRegistros = true;
+                        const real = parseInt(diaData.piezas_reales);
+                        const programado = parseInt(diaData.piezas_programadas);
+                        const scrap = parseInt(diaData.scrap);
+                        
+                        totalProgramado += programado;
+                        totalReal += real;
+                        totalScrap += scrap;
+                        
+                        const porcentajeReal = programado > 0 ? ((real / programado) * 100).toFixed(2) : 0;
+                        const totalPiezas = real + scrap;
+                        const porcentajeScrap = totalPiezas > 0 ? ((scrap / totalPiezas) * 100).toFixed(2) : 0;
+                        
+                        cell.innerHTML = `
+                            <b>No. Parte:</b> ${diaData.no_parte_interno}<br>
+                            <b>Operador:</b> ${diaData.nombre_operador}<br>
+                            <b>Programadas:</b> ${programado}<br>
+                            <b>Reales:</b> <span style="color: green;">${real}</span> (${porcentajeReal}%)<br>
+                            <b>Scrap:</b> <span style="color: green;">${scrap}</span> (${porcentajeScrap}%)
+                        `;
+                    } else {
+                        cell.textContent = "-";
+                    }
+                });
+                
+                // Celdas de totales y desempeño
+                const acumuladoCell = row.insertCell();
+                acumuladoCell.innerHTML = `<b>Programado:</b> ${totalProgramado}<br><b>Real:</b> ${totalReal}<br><b>Scrap:</b> ${totalScrap}`;
+                
+                const desempenoCell = row.insertCell();
+                const totalGeneral = totalReal + totalScrap;
+                const porcentajeTotalReal = totalProgramado > 0 ? ((totalReal / totalProgramado) * 100).toFixed(2) : 0;
+                const porcentajeTotalScrap = totalGeneral > 0 ? ((totalScrap / totalGeneral) * 100).toFixed(2) : 0;
+                desempenoCell.innerHTML = `<b>Real:</b> ${porcentajeTotalReal}%<br><b>Scrap:</b> ${porcentajeTotalScrap}%`;
+                
+                const abonoCell = row.insertCell();
+                const superaMeta = porcentajeTotalReal >= 80;
+                abonoCell.style.color = superaMeta ? 'green' : 'red';
+                abonoCell.textContent = superaMeta ? "¡Bono!" : "No bono";
+
+                const accionesCell = row.insertCell();
+                if (hayRegistros) {
+                    accionesCell.innerHTML = `
+                        <button class = "accion-btn edit-btn" onclick="iniciarEdicionModal('${maquina}')">Editar</button>
+                        <button class = "accion-btn delete-btn" onclick="iniciarEliminacionModal('${maquina}')">Eliminar</button>
+                    `;
+                } else {
+                    accionesCell.textContent = "-";
+                }
+            });
+        });
+    });
+    
+    // Llamar a la función de totales semanales
+    mostrarTotalSemanal();
+}
+// Función de ayuda para obtener el número de semana
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return weekNo;
+}
+
+function getYearNumber(d) {
+    return d.getFullYear();
+}
+async function cargarDatosSemanaActual() {
+    const today = new Date();
+    const currentAnio = getYearNumber(today);
+    const currentSemana = getWeekNumber(today);
+
+    // Llama a la función existente (cargarDatosSemanaAnio) con los parámetros de la semana actual.
+    // Esto asegura que la tabla se cargue vacía si no hay registros para esta semana.
+    await cargarDatosSemanaAnio(currentAnio, currentSemana);
+}
+window.onload = function() {
+    obtenerNumerosDeParte();
+    // Ahora llamamos a la función que filtra por la semana actual.
+    // La función cargarDatosSemanaActual se encargará de llamar a mostrarDatosEnTabla().
+    cargarDatosSemanaActual(); 
+};
+
+
+// Agrega esta nueva función para calcular y mostrar los totales semanales
+// MODIFICA esta función
+async function mostrarTotalSemanal() {
+    const tabla = document.getElementById('tablaTotalSemanal');
+    const tbody = tabla.querySelector('tbody') || tabla.appendChild(document.createElement('tbody'));
+    tbody.innerHTML = '';
+
+    let totalProgramadoSemanal = 0;
+    let totalRealSemanal = 0;
+    let totalScrapSemanal = 0;
+
+    // Recorre el array plano de datos para acumular los totales
+    eficienciaData.forEach(d => {
+        totalProgramadoSemanal += parseFloat(d.piezas_programadas);
+        totalRealSemanal += parseFloat(d.piezas_reales);
+        totalScrapSemanal += parseFloat(d.scrap);
+    });
+
+    let disponibilidadMaquinasSemanal = '0.00';
+    let maquinasUnicas = [];
+
+    // Solo si hay datos de eficiencia, intenta obtener la disponibilidad
+    if (eficienciaData.length > 0) {
+        maquinasUnicas = [...new Set(eficienciaData.map(d => d.maquina))];
+        let sumatoriaDisponibilidad = 0;
+
+        try {
+            const response = await fetch('/obtener_disponibilidades');
+            if (!response.ok) {
+                throw new Error('Error al obtener datos de disponibilidad del servidor.');
+            }
+            const disponibilidadData = await response.json();
+            
+            const disponibilidadPorMaquina = {};
+            disponibilidadData.forEach(item => {
+                if (!disponibilidadPorMaquina[item.maquina]) {
+                    disponibilidadPorMaquina[item.maquina] = [];
+                }
+                disponibilidadPorMaquina[item.maquina].push(item);
+            });
+
+            maquinasUnicas.forEach(maquina => {
+                let totalMinutosSemana = 0;
+                let totalHorasTeoricas = 0;
+                const parosDeMaquina = disponibilidadPorMaquina[maquina] || [];
+                
+                if (parosDeMaquina.length > 0) {
+                    parosDeMaquina.forEach(paro => {
+                        totalMinutosSemana += paro.minutos_perdidos;
+                    });
+                    
+                    const diasConRegistro = new Set(parosDeMaquina.map(p => new Date(p.fecha + 'T12:00:00Z').getUTCDay()));
+                    diasConRegistro.forEach(dia => {
+                        totalHorasTeoricas += (dia === 5) ? 6.8 : 8.7; // El día 5 (viernes) tiene 6.8 horas
+                    });
+                } else {
+                    totalHorasTeoricas = (8.7 * 4) + 6.8;
+                }
+
+                let disponibilidadMaquina = 100;
+                if (totalHorasTeoricas > 0) {
+                    const horasDisponiblesSemana = totalHorasTeoricas - (totalMinutosSemana / 60);
+                    disponibilidadMaquina = (horasDisponiblesSemana / totalHorasTeoricas) * 100;
+                }
+                
+                sumatoriaDisponibilidad += disponibilidadMaquina;
+            });
+
+            disponibilidadMaquinasSemanal = maquinasUnicas.length > 0 ? (sumatoriaDisponibilidad / maquinasUnicas.length).toFixed(2) : '0.00';
+        } catch (error) {
+            console.error('Error al obtener datos de disponibilidad:', error);
+            showToast("No se pudo cargar la disponibilidad semanal.", "error");
+        }
+    }
+
+    // Calcular los porcentajes y valores finales de eficiencia
+    const totalPiezasProducidas = totalRealSemanal + totalScrapSemanal;
+    const eficienciaSemanal = totalProgramadoSemanal > 0 ? ((totalRealSemanal / totalProgramadoSemanal) * 100).toFixed(2) : 0;
+    const calidadSemanal = totalPiezasProducidas > 0 ? ((totalRealSemanal / totalPiezasProducidas) * 100).toFixed(2) : 0;
+    const scrapSemanal = totalPiezasProducidas > 0 ? ((totalScrapSemanal / totalPiezasProducidas) * 100).toFixed(2) : 0;
+    const bonoSemanal = eficienciaSemanal >= 80 ? '¡Bono productivo!' : 'Bono no productivo';
+
+    // Crear la nueva fila y llenarla con los resultados
+    const row = tbody.insertRow();
+    row.insertCell().innerHTML = `<b>${bonoSemanal}</b>`;
+    row.insertCell().textContent = `${disponibilidadMaquinasSemanal}%`; 
+    row.insertCell().textContent = `${eficienciaSemanal}%`;
+    row.insertCell().textContent = `${calidadSemanal}%`;
+    row.insertCell().textContent = `${scrapSemanal}%`;
+    row.insertCell().textContent = `${totalRealSemanal}`;
+    row.insertCell().textContent = `${totalProgramadoSemanal}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const profileToggle = document.querySelector('.profile-toggle');
+    const profileContainer = document.querySelector('.profile-menu-container-top-right');
+    const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+    if (profileToggle && profileMenu && profileContainer) {
+        profileToggle.addEventListener('click', () => {
+            // Oculta/Muestra el menú usando la clase 'hidden'
+            profileMenu.classList.toggle('hidden'); 
+            // Añade/Remueve la clase 'active' para girar el icono de la flecha
+            profileContainer.classList.toggle('active');
+        });
+    }
+    document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+});
+</script>
+</body>
+</html>

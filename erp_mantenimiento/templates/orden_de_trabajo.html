@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Trabajo - Formato de impresión</title>
+    <style>
+        /* Estilos generales para el formato de impresión, tomados de formato_impresion.html */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20mm; /* Márgenes para impresión */
+            color: #333;
+            /* Aplicar mayúsculas a todo el cuerpo del documento */
+            text-transform: uppercase;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 210mm; /* Ancho de una hoja A4 */
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+
+        .print-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 3mm;
+            padding-bottom: 5mm;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-left {
+            flex: 1;
+            text-align: left;
+        }
+
+        .header-center {
+            flex: 2;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .header-right {
+            flex: 1;
+            text-align: right;
+        }
+
+        .company-logo {
+            max-width: 38mm;
+            height: auto;
+            display: block;
+        }
+
+        .print-title {
+            margin: 0;
+            font-size: 24pt;
+            color: #2c3e50;
+        }
+
+        .header-info-table {
+            width: auto;
+            font-size: 9pt;
+            border-collapse: collapse;
+            margin-left: auto;
+        }
+
+        .header-info-table td {
+            padding: 1mm 2mm;
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        table td, table th {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .label-print {
+            font-weight: bold;
+        }
+        
+        /* Estilo para la sección del encabezado de la orden de trabajo */
+        .order-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start; /* Alinea los elementos arriba */
+            margin-top: 15px; /* Espacio superior para separarlo */
+            margin-bottom: 15px;
+            padding: 5px 0;
+        }
+        .order-header-section div {
+            flex: 1;
+            padding: 0 5px;
+        }
+        .order-header-section .right-align {
+            text-align: right;
+        }
+        .order-header-section .label-print {
+            display: block; /* Etiqueta en una nueva línea */
+            margin-bottom: 5px;
+        }
+
+        /* Estilos específicos para la orden de trabajo */
+        .info-table td:first-child {
+            font-weight: bold;
+        }
+        
+        /* Estilo para las dos columnas de información */
+        .info-columns-container {
+            display: flex;
+            gap: 15px; /* Espacio entre las columnas */
+            margin-top: 20px; /* Aumenta el espacio superior */
+            margin-bottom: 10px;
+        }
+        .info-column {
+            flex: 1;
+            border: 1px solid #000;
+        }
+        .info-column table {
+            margin-bottom: 0;
+        }
+        .info-column table td {
+            border: none;
+        }
+
+        /* Estilo para las celdas de falla y analisis */
+        .work-details-table {
+            margin-top: 20px;
+        }
+        .work-details-table td {
+            width: 100%;
+        }
+        .work-details-table .label-print {
+            display: block;
+            background-color: #f2f2f2;
+            padding: 5px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        /* Modificación para que Falla y Análisis estén en filas separadas */
+        .work-details-table-row {
+            border: 1px solid #000;
+        }
+        .work-details-table-row td {
+            border: none;
+        }
+
+        /* Anulación de la transformación a mayúsculas para los comentarios */
+        .failure-analysis-content {
+            text-transform: none;
+        }
+
+        .signature-section {
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-end;
+        margin-top: 130px;
+        width: 100%;
+        page-break-inside: avoid; /* Evita que esta seccion se corte entre paginas al imprimir */
+    }
+
+    .signature-group {
+        text-align: center;
+        width: 45%;
+    }
+
+    .signature-line {
+        border-bottom: 1px solid black;
+        width: 100%;
+        margin-bottom: 5px;
+        min-height: 20px;
+    }
+
+    .signature-label {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+
+        @media print {
+            body {
+                margin: 0;
+            }
+            .container {
+                border: none;
+                padding: 0;
+            }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="print-header">
+        <div class="header-left">
+            <img src="/static/logo empresa.png" alt="Company Logo" class="company-logo">
+        </div>
+
+        <div class="header-center">
+            <h1 class="print-title">ORDEN DE TRABAJO</h1>
+            <h2>INFORMACION GENERAL</h2>
+        </div>
+        
+        <div class="header-right">
+            <table class="header-info-table">
+                <tr>
+                    <td>Formato:</td>
+                    <td>MTA-MTTO-03</td>
+                </tr>
+                <tr>
+                    <td>Revisión:</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td>Fecha:</td>
+                    <td id="printElaborationDate"></td>
+                </tr>
+                <tr>
+                    <td>Elaborado:</td>
+                    <td>ING. JUAN GARCÍA S.</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="order-header-section">
+        <div>
+            <span class="label-print">ÁREA/MÁQUINA:</span>
+            <span id="printAreaMachine"></span>
+        </div>
+        <div class="right-align">
+            <span class="label-print">FECHA/HORA QUE SE REALIZÓ:</span>
+            <span id="printDate"></span>
+        </div>
+    </div>
+    
+    <div class="info-columns-container">
+        <div class="info-column">
+            <table class="info-table">
+                <tr>
+                    <td class="label-print">ASIGNADO(A):</td>
+                    <td id="printAssigned"></td>
+                </tr>
+                <tr>
+                    <td class="label-print">ORIGINADOR</td>
+                    <td id="printOriginator"></td>
+                </tr>
+                
+            </table>
+        </div>
+        
+        <div class="info-column">
+            <table class="info-table">
+                <tr>
+                    <td class="label-print">TIPO</td>
+                    <td id="printType"></td>
+                </tr>
+                <tr>
+                    <td class="label-print">PRIORIDAD</td>
+                    <td id="printPriority"></td>
+                </tr>
+                <tr>
+                    <td class="label-print">ÁREA</td>
+                    <td id="printArea"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <table class="info-table work-details-table">
+        <tr class="work-details-table-row">
+            <td>
+                <span class="label-print centered-label">FALLA / REQUERIMIENTO</span>
+                <p id="printFailure" class="failure-analysis-content"></p>
+            </td>
+        </tr>
+        <tr class="work-details-table-row">
+            <td>
+                <span class="label-print centered-label">ANÁLISIS DE FALLA</span>
+                <p id="printAnalysis" class="failure-analysis-content"></p>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="signature-section">
+    <div class="signature-group">
+        <div class="signature-line"></div>
+        <p class="signature-label">O.T. RECIBIDA (FIRMA)</p>
+    </div>
+    <div class="signature-group">
+        <div class="signature-line"></div>
+        <p class="signature-label">TRABAJO RECIBIDO (FIRMA)</p>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const workOrderDataString = localStorage.getItem('workOrderData');
+        
+        if (workOrderDataString) {
+            const workOrderData = JSON.parse(workOrderDataString);
+            
+            const now = new Date();
+            const elaborationDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            document.getElementById('printElaborationDate').textContent = elaborationDate;
+            document.getElementById('printDate').textContent = workOrderData.date.replace('T', ' ');
+            document.getElementById('printOriginator').textContent = workOrderData.originator;
+            document.getElementById('printAreaMachine').textContent = workOrderData.areaMachine;
+            document.getElementById('printAssigned').textContent = workOrderData.assigned;
+            document.getElementById('printType').textContent = workOrderData.type;
+            document.getElementById('printPriority').textContent = workOrderData.priority;
+            document.getElementById('printArea').textContent = workOrderData.area;
+            document.getElementById('printFailure').textContent = workOrderData.failure;
+            document.getElementById('printAnalysis').textContent = workOrderData.analysis;
+            
+            localStorage.removeItem('workOrderData');
+            
+            window.print();
+        } else {
+            document.body.innerHTML = '<h1>Error: No se encontraron datos para la orden de trabajo.</h1>';
+        }
+    });
+</script>
+
+</body>
+</html>

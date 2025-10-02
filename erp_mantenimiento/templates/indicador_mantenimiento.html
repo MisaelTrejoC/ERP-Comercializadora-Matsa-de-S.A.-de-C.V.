@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Indicador general mantenimento</title>
+    <style>
+    .form-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: #fcfcfc;
+    }
+
+    .form-section .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-section .input-group label {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-section .input-group input[type="text"],
+    .form-section .input-group select,
+    .form-section .input-group input[type="number"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+    }
+
+    thead th {
+        
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+    }    
+
+    /* Estilos del modal con transición, copiados de almacenamiento.html */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* Propiedades para la animación */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        /* La clase `show` activará la visibilidad y opacidad */
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        max-width: 400px;
+        min-width: 300px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .message-box {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        display: none;
+        z-index: 1001;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* Estilo de la caja de mensaje con transición */
+    .message-box.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+    .message-box.success {
+        background-color: #28a745;
+    }
+
+    .message-box.error {
+        background-color: #dc3545;
+    }
+
+    .message-box.info {
+        background-color: #2196F3; /* Azul */
+    }
+    </style>
+</head>
+<body>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacenamiento</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+                <div id="mantenimento-menu" class="dropdown-menu">
+                    <a href="/indicador_mantenimiento">Indicador mantenimento</a>
+                    <a href="/indicador_calidad">Indicador calidad</a>
+                    <a href="/indicador_produccion">Indicador produccion</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <h2>Indicador - Mantenimiento</h2>
+
+        <section>
+            <h3>Total de Mantenimientos Realizados</h3>
+            <table id="totalsTable">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="total-realized-row">
+                        <td>Total Realizados</td>
+                    </tr>
+                    <tr id="total-scheduled-row">
+                        <td>Programadas</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <h3>Indicador de Mantenimiento Anual</h3>
+        <section class="form-section">
+            <div style="width: 100%; max-width: 600px; margin: auto;">
+                <canvas id="maintenanceChart"></canvas>
+            </div>
+        </section>
+        
+        <div class="button-group">
+            <button id="viewIndicatorBtn" class="btn btn-primary">Ver indicador</button>
+        </div>
+    </main>
+    <div id="indicatorModal" class="modal">
+        <div class="modal-content">
+            <h3>Indicador de Mantenimiento Anual</h3>
+            <div style="width: 100%; max-width: 600px; margin: auto;">
+                <canvas id="maintenanceChart"></canvas>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeIndicatorModalBtn" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="messageBox" class="message-box"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+  <script>
+// Data and helper objects
+const weeksPerMonth = {
+    'Enero': 4, 'Febrero': 4, 'Marzo': 5, 'Abril': 4, 'Mayo': 5, 'Junio': 4,
+    'Julio': 4, 'Agosto': 5, 'Septiembre': 4, 'Octubre': 4, 'Noviembre': 5, 'Diciembre': 4
+};
+const monthNames = Object.keys(weeksPerMonth);
+const state = {
+    maintenanceRecords: [],
+    maintenanceChartInstance: null,
+};
+const domElements = {
+    totalsTable: document.getElementById('totalsTable'),
+    maintenanceChart: document.getElementById('maintenanceChart'),
+    viewIndicatorBtn: document.getElementById('viewIndicatorBtn')
+};
+
+// --- Data Persistence with Flask API ---
+async function getMaintenanceRecords() {
+    try {
+        const response = await fetch('/api/mantenimiento');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching records:', error);
+        return [];
+    }
+}
+
+// --- UI Functions ---
+function renderTotalsTable() {
+    const totalsTable = domElements.totalsTable;
+    const headRow = totalsTable.querySelector('thead tr');
+    const totalRealizedRow = document.getElementById('total-realized-row');
+    const totalScheduledRow = document.getElementById('total-scheduled-row');
+
+    // Clear existing headers and data
+    headRow.innerHTML = '<th>Mes</th>';
+    totalRealizedRow.innerHTML = '<td>Total Realizados</td>';
+    totalScheduledRow.innerHTML = '<td>Programadas</td>';
+    
+    const realizedTotals = {};
+    monthNames.forEach(month => {
+        realizedTotals[month] = 0;
+    });
+
+    // Calculate realized totals from fetched data
+    state.maintenanceRecords.forEach(record => {
+        monthNames.forEach(month => {
+            const weeksInMonth = weeksPerMonth[month];
+            for (let i = 1; i <= weeksInMonth; i++) {
+                const statusKey = `${month}-${i}`;
+                if (record.status[statusKey] && record.status[statusKey].status === 'done') {
+                    realizedTotals[month]++;
+                }
+            }
+        });
+    });
+
+    // Populate the totals table
+    monthNames.forEach((month, index) => {
+        const th = document.createElement('th');
+        th.textContent = month;
+        headRow.appendChild(th);
+
+        const tdRealized = document.createElement('td');
+        tdRealized.textContent = realizedTotals[month];
+        totalRealizedRow.appendChild(tdRealized);
+
+        const tdScheduled = document.createElement('td');
+        const inputScheduled = document.createElement('input');
+        inputScheduled.type = 'number';
+        inputScheduled.min = '0';
+        inputScheduled.max = '50';
+        inputScheduled.id = `scheduled-${month}`;
+        inputScheduled.placeholder = 'Ingresar #';
+        
+        // Load value from local storage
+        const savedValue = localStorage.getItem(`scheduled-${month}`);
+        if (savedValue) {
+            inputScheduled.value = savedValue;
+        }
+
+        // Add event listener to save on change
+        inputScheduled.addEventListener('input', (event) => {
+            localStorage.setItem(event.target.id, event.target.value);
+        });
+        
+        tdScheduled.appendChild(inputScheduled);
+        totalScheduledRow.appendChild(tdScheduled);
+    });
+}
+
+function createMaintenanceChart(realizedData, scheduledData, labels) {
+    const ctx = domElements.maintenanceChart.getContext('2d');
+
+    if (state.maintenanceChartInstance) {
+        state.maintenanceChartInstance.destroy();
+    }
+
+    const realizedPercentages = labels.map((month, index) => {
+        const scheduled = scheduledData[index];
+        const realized = realizedData[index];
+        return scheduled > 0 ? ((realized / scheduled) * 100).toFixed(2) : 0;
+    });
+
+    state.maintenanceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '% Cumplimiento',
+                data: realizedPercentages,
+                backgroundColor: realizedPercentages.map(percentage => {
+                    return percentage >= 80 ? 'rgba(40, 167, 69, 0.6)' : 'rgba(220, 53, 69, 0.6)';
+                }),
+                borderColor: realizedPercentages.map(percentage => {
+                    return percentage >= 80 ? 'rgba(40, 167, 69, 1)' : 'rgba(220, 53, 69, 1)';
+                }),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Porcentaje (%)'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            return `Cumplimiento: ${value}%`;
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: {
+                        line1: {
+                            type: 'line',
+                            yMin: 80,
+                            yMax: 80,
+                            borderColor: 'rgb(255, 99, 132)',
+                            borderWidth: 2,
+                            borderDash: [10, 5],
+                            label: {
+                                content: 'Meta Mínima: 80%',
+                                enabled: true,
+                                position: 'end'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function loadData() {
+    state.maintenanceRecords = await getMaintenanceRecords();
+    renderTotalsTable();
+}
+
+// Event listener for the "Ver indicador" button
+domElements.viewIndicatorBtn.addEventListener('click', () => {
+    const realizedData = monthNames.map(month => {
+        const total = document.getElementById('total-realized-row').querySelector(`td:nth-child(${monthNames.indexOf(month) + 2})`).textContent;
+        return parseInt(total, 10);
+    });
+    
+    // Read scheduled data directly from the new input fields
+    const scheduledData = monthNames.map(month => {
+        const inputElement = document.getElementById(`scheduled-${month}`);
+        return inputElement ? parseInt(inputElement.value, 10) || 0 : 0;
+    });
+
+    createMaintenanceChart(realizedData, scheduledData, monthNames);
+});
+
+// Initial data load when the page is ready
+window.onload = loadData;
+  </script>
+
+</body>
+</html>

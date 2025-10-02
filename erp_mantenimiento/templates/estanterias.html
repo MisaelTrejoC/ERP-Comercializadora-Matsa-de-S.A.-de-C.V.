@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matsa - Registro de Material en Estantería</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+            display: none; /* Oculto por defecto */
+            justify-content: center;
+            align-items: center;
+
+            /* Propiedades para la animación */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease; /* Transición para el fondo */
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+            display: flex; /* O 'block' según necesites para centrar */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 300px;
+            position: relative;
+            /* Aquí también puedes añadir transiciones para el contenido si quieres que suba/baje */
+            transform: translateY(-20px); /* Ejemplo: empieza un poco más abajo */
+            transition: transform 0.3s ease; /* Transición para el contenido */
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0); /* Vuelve a su posición normal */
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gambeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    {% if user_role == 'admin' %}
+                    <a href="/costeos">Costeos de manufactura</a>
+                    {% endif %}
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            {%if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main>
+        <h2 id="formTitle">Material en estantería - Almacen</h2>
+        <div id="toastContainer" class="toast-container"></div>
+        <div>
+            <form id="materialForm">
+                <section class="form-section">
+                    <input type="hidden" id="materialId">
+                    <div>
+                        <label for="ubicacion">Ubicación</label>
+                        <select id="ubicacion" name="ubicacion" required>
+                            <option value="">Seleccione una opción</option>
+                            <option value="Estanteria 1">Estanteria 1</option>
+                            <option value="Estanteria 2">Estanteria 2</option>
+                            <option value="Estanteria 3">Estanteria 3</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="nombre_producto">Nombre del Producto</label>
+                        <input type="text" id="nombre_producto" name="nombre_producto" required>
+                    </div>
+                    <div>
+                        <label for="proveedor">Proveedor (opcional)</label>
+                        <input type="text" id="proveedor" name="proveedor">
+                    </div>
+                    <div>
+                        <label for="descripcion">Descripción</label>
+                        <input type="text" id="descripcion" name="descripcion" required>
+                    </div>
+                    <div>
+                        <label for="marca1">Marca 1 (opcional)</label>
+                        <input type="text" id="marca1" name="marca1">
+                    </div>
+                    <div>
+                        <label for="marca2">Marca 2 (opcional)</label>
+                        <input type="text" id="marca2" name="marca2">
+                    </div>
+                    <div>
+                        <label for="marca3">Marca 3 (opcional)</label>
+                        <input type="text" id="marca3" name="marca3">
+                    </div>
+                    <div>
+                        <label for="codigo1">Código 1 (opcional)</label>
+                        <input type="text" id="codigo1" name="codigo1">
+                    </div>
+                    <div>
+                        <label for="codigo2">Código 2 (opcional)</label>
+                        <input type="text" id="codigo2" name="codigo2">
+                    </div>
+                    <div>
+                        <label for="codigo3">Código 3 (opcional)</label>
+                        <input type="text" id="codigo3" name="codigo3">
+                    </div>
+                    <div>
+                        <label for="valor_unitario1">Valor unitario 1 ($)</label>
+                        <input type="number" id="valor_unitario1" name="valor_unitario1" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="valor_unitario2">Valor unitario 2 ($)</label>
+                        <input type="number" id="valor_unitario2" name="valor_unitario2" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="valor_unitario3">Valor unitario 3 ($)</label>
+                        <input type="number" id="valor_unitario3" name="valor_unitario3" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="valor_unitario4">Valor unitario 4 ($)</label>
+                        <input type="number" id="valor_unitario4" name="valor_unitario4" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="minimo">Mínimo:</label>
+                        <input type="number" id="minimo" min="0">
+                    </div>
+                    <div>
+                        <label for="maximo">Máximo:</label>
+                        <input type="number" id="maximo" min="0">
+                    </div>
+                    <div>
+                        <label for="cantidad_a_prestar">Cantidad a prestar</label>
+                        <input type="number" id="cantidad_a_prestar" name="cantidad_a_prestar" required min="0">
+                    </div>
+                    <div>
+                        <label for="cantidad_actual">Cantidad actual</label>
+                        <input type="number" id="cantidad_actual" name="cantidad_actual" required min="0">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label for="observaciones">Observaciones (opcional)</label>
+                        <textarea id="observaciones" name="observaciones" rows="3"></textarea>
+                    </div>
+                </section>
+                <div class="form-buttons">
+                    <button type="submit" id="saveBtn">Guardar material</button>
+                    <button type="button" id="cancelEdit" class="accion-btn cancel hidden">Cancelar Edición</button>
+                </div>
+            </form>
+        </div>
+        <section class="form-buttons">
+            <section class="form-section">
+                <h3>Buscar Material</h3>
+                <input type="text" id="searchMaterialInput" placeholder="Buscar por Descripción...">
+            </section>
+        </section>
+        <div>
+            <h2>Material Registrado</h2>
+            <table id="tablaMaterial">
+                <thead>
+                    <tr>
+                        <th>No. de ID</th>
+                        <th>Ubicación</th>
+                        <th>Producto</th>
+                        <th>Proveedor</th>
+                        <th>Descripción</th>
+                        <th>Marca 1</th>
+                        <th>Marca 2</th>
+                        <th>Marca 3</th>
+                        <th>Código 1</th>
+                        <th>Código 2</th>
+                        <th>Código 3</th>
+                        <th>Valor U. 1</th>
+                        <th>Valor U. 2</th>
+                        <th>Valor U. 3</th>
+                        <th>Valor U. 4</th>
+                        <th>Cant. Prestada</th>
+                        <th>Cant. Actual</th>
+                        <th>Minimo</th>
+                        <th>Maximo</th>
+                        <th>Disponibilidad</th>
+                        <th>Observaciones</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="materialTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar este material?</p>
+            <div>
+                <button id="confirmDeleteBtn" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeDeleteModal()" class="accion-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="barcodeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeBarcodeModal()">&times;</span>
+            <h3>Código de Barras</h3>
+            <div id="barcodeInfo" class="barcode-info">
+                <p><strong>ID:</strong> <span id="barcodeId"></span></p>
+                <p><strong>Producto:</strong> <span id="barcodeProducto"></span></p>
+                <p><strong>Proveedor:</strong> <span id="barcodeProveedor"></span></p>
+                <p><strong>Descripción:</strong> <span id="barcodeDescripcion"></span></p>
+                <p><strong>Marca:</strong> <span id="barcodeMarca"></span></p>
+                <p><strong>Código:</strong> <span id="barcodeCodigo"></span></p>
+                <p><strong>Valor:</strong> <span id="barcodeValor"></span></p>
+                <p><strong>Cantidad Actual:</strong> <span id="barcodeCantidadActual"></span></p>
+            </div>
+            <canvas id="barcodeCanvas"></canvas>
+            <div class="barcode-buttons">
+                <button onclick="printBarcode()" class="accion-btn imprimir">Imprimir</button>
+                <button onclick="saveBarcodeAsJPG()" class="accion-btn imprimir">Guardar JPG</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+<script>
+    const USER_ROLE = "{{ user_role }}"; 
+
+    const materialForm = document.getElementById('materialForm');
+    const materialIdInput = document.getElementById('materialId');
+    const formTitle = document.getElementById('formTitle');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const materialTableBody = document.getElementById('materialTableBody');
+    const searchMaterialInput = document.getElementById('searchMaterialInput');
+    const toastContainer = document.getElementById('toastContainer');
+    const cantidadActualInput = document.getElementById('cantidad_actual');
+    const cantidadAPrestarInput = document.getElementById('cantidad_a_prestar');
+    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    let materialToDeleteId = null;
+
+    // Modal elements for Barcode
+    const barcodeModal = document.getElementById('barcodeModal');
+    let currentMaterialIdForBarcode = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+                // 1. Obtener elementos
+    const profileToggle = document.querySelector('.profile-toggle');
+    const profileContainer = document.querySelector('.profile-menu-container-top-right');
+    const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+    if (profileToggle && profileMenu && profileContainer) {
+        profileToggle.addEventListener('click', () => {
+            // Oculta/Muestra el menú usando la clase 'hidden'
+            profileMenu.classList.toggle('hidden'); 
+            // Añade/Remueve la clase 'active' para girar el icono de la flecha
+            profileContainer.classList.toggle('active');
+        });
+    }
+    document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+
+        fetchMaterial();
+
+        if (materialForm) {
+            materialForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveMaterial();
+            });
+        } else {
+            console.error("Error: 'materialForm' not found.");
+        }
+
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', clearForm);
+        } else {
+            console.error("Error: 'cancelEditBtn' not found.");
+        }
+        
+        if (searchMaterialInput) {
+            searchMaterialInput.addEventListener('input', searchMaterial);
+        } else {
+            console.error("Error: 'searchMaterialInput' not found.");
+        }
+
+        
+        
+        if (materialTableBody) {
+            materialTableBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) {
+                    const id = e.target.dataset.id;
+                    editMaterial(id);
+                } else if (e.target.classList.contains('delete-btn')) {
+                    const id = e.target.dataset.id;
+                    openDeleteModal(id);
+                } else if (e.target.classList.contains('code-btn')) {
+                    const id = e.target.dataset.id;
+                    openBarcodeModal(id);
+                }
+            });
+        }
+
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if (materialToDeleteId) {
+                    await deleteMaterial(materialToDeleteId);
+                    closeDeleteModal();
+                }
+            });
+        } else {
+            console.error("Error: 'confirmDeleteBtn' not found.");
+        }
+
+        const dropdownToggle = document.querySelector('.dropdown-toggle');
+        if (dropdownToggle) {
+            dropdownToggle.addEventListener('click', function() {
+                const dropdownMenu = this.nextElementSibling;
+                if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                }
+            });
+        }
+    });
+
+    // Function to show toast messages
+    function showMessage(message, type) {
+        if (!toastContainer) {
+            console.error("Error: 'toastContainer' not found. Message: " + message);
+            return;
+        }
+        const toast = document.createElement('div');
+        toast.classList.add('toast', type);
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+
+    // Functions for the delete confirmation modal
+    function openDeleteModal(id) {
+        materialToDeleteId = id;
+        if (deleteConfirmModal) {
+            deleteConfirmModal.style.display = 'flex';
+            setTimeout(() => deleteConfirmModal.classList.add('show'), 10);
+        } else {
+            console.error("Error: 'deleteConfirmModal' not found.");
+        }
+    }
+
+    function closeDeleteModal() {
+        if (deleteConfirmModal) {
+            deleteConfirmModal.classList.remove('show');
+            setTimeout(() => {
+                deleteConfirmModal.style.display = 'none';
+                materialToDeleteId = null;
+            }, 300);
+        } else {
+            console.error("Error: 'deleteConfirmModal' not found.");
+        }
+    }
+
+    // Functions for the barcode modal
+    async function openBarcodeModal(id) {
+        try {
+            const response = await fetch(`/obtener_material_estanteria/${id}`); 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const material = await response.json();
+            
+            document.getElementById('barcodeId').textContent = material[0] || 'N/A';
+            document.getElementById('barcodeProducto').textContent = material[2] || 'N/A';
+            document.getElementById('barcodeProveedor').textContent = material[3] || 'N/A';
+            document.getElementById('barcodeDescripcion').textContent = material[4] || 'N/A';
+            
+            const marcas = [material[5], material[6], material[7]].filter(m => m).join(', ');
+            document.getElementById('barcodeMarca').textContent = marcas || 'N/A';
+            
+            const codigos = [material[8], material[9], material[10]].filter(c => c).join(', ');
+            document.getElementById('barcodeCodigo').textContent = codigos || 'N/A';
+            
+            const valores = [material[11], material[12], material[13], material[14]].filter(v => v !== null).join(', ');
+            document.getElementById('barcodeValor').textContent = valores ? `$${valores}` : 'N/A';
+            
+            document.getElementById('barcodeCantidadActual').textContent = material[16] !== null ? material[16] : 'N/A';
+            
+            const barcodeCanvas = document.getElementById('barcodeCanvas');
+            const barcodeData = material[4];
+            if (barcodeData) {
+                JsBarcode(barcodeCanvas, barcodeData, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 2,
+                    height: 40,
+                    displayValue: true
+                });
+            } else {
+                const context = barcodeCanvas.getContext('2d');
+                context.clearRect(0, 0, barcodeCanvas.width, barcodeCanvas.height);
+                context.fillStyle = "red";
+                context.font = "14px Arial";
+                context.fillText("No hay descripción para generar el código.", 10, 50);
+            }
+            
+            if (barcodeModal) {
+                barcodeModal.style.display = 'flex';
+                setTimeout(() => barcodeModal.classList.add('show'), 10);
+            }
+        } catch (error) {
+            console.error('Error al obtener material para código de barras:', error);
+            showMessage('Error al cargar los datos del material.', 'error');
+        }
+    }
+    
+    function closeBarcodeModal() {
+        if (barcodeModal) {
+            barcodeModal.classList.remove('show');
+            setTimeout(() => barcodeModal.style.display = 'none', 300);
+        }
+    }
+
+    function printBarcode() {
+        if (!barcodeCanvas) {
+            console.error("El elemento canvas no fue encontrado para imprimir.");
+            return;
+        }
+        const dataUrl = barcodeCanvas.toDataURL('image/png');
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            alert("Por favor, habilita las ventanas emergentes para poder imprimir.");
+            return;
+        }
+        newWindow.document.write('<!DOCTYPE html><html><head><title>Imprimir Código de Barras</title>');
+        newWindow.document.write('<style>body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; } img { max-width: 100%; height: auto; box-shadow: 0 0 15px rgba(0,0,0,0.3); }</style>');
+        newWindow.document.write('</head><body onload="window.print(); window.close();">');
+        newWindow.document.write('<img src="' + dataUrl + '" alt="Código de Barras">');
+        newWindow.document.write('</body></html>');
+        newWindow.document.close();
+    }
+
+    function saveBarcodeAsJPG() {
+        if (!barcodeCanvas) {
+            console.error("El elemento canvas no fue encontrado para guardar.");
+            return;
+        }
+        const dataURL = barcodeCanvas.toDataURL('image/jpeg', 1.0);
+        const link = document.createElement('a');
+        link.download = `codigo_barras_${document.getElementById('barcodeId').textContent || 'material'}.jpg`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Main CRUD Functions
+    async function fetchMaterial() {
+        try {
+            const response = await fetch('/obtener_material_estanteria');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const material = await response.json();
+            renderTable(material);
+        } catch (error) {
+            console.error('Error fetching material:', error);
+            showMessage('Error al cargar el material de estantería.', 'error');
+        }
+    }
+
+    function renderTable(materiales) {
+        if (!materialTableBody) {
+            console.error("Error: 'materialTableBody' not found.");
+            return;
+        }
+        materialTableBody.innerHTML = '';
+        const totalColumns = 22;
+
+        if (materiales.length === 0) {
+            const row = materialTableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = totalColumns;
+            cell.textContent = 'No hay material registrado en estantería.';
+            cell.style.textAlign = 'center';
+            return;
+        }
+
+        materiales.forEach((material) => {
+            const row = materialTableBody.insertRow();
+            const cantidadActual = material[16] !== null ? parseInt(material[16]) : 0;
+            const minimo = material[18] !== null ? parseInt(material[18]) : 0;
+            const maximo = material[19] !== null ? parseInt(material[19]) : 0;
+
+            let disponibilidadTexto = 'N/A';
+            let disponibilidadClass = '';
+
+            if (cantidadActual === 0) {
+                disponibilidadTexto = 'No disponible';
+                disponibilidadClass = 'no-disponible';
+            } else if (cantidadActual < maximo / 2) {
+                disponibilidadTexto = 'Bajo Stock';
+                disponibilidadClass = 'bajo-stock';
+            } else if (cantidadActual > maximo) {
+                disponibilidadTexto = 'Sobre Stock';
+                disponibilidadClass = 'sobre-stock';
+            } else {
+                disponibilidadTexto = 'Disponible';
+                disponibilidadClass = 'disponible';
+            }
+
+            row.innerHTML = `
+                <td>${material[0]}</td>
+                <td>${material[1]}</td>
+                <td>${material[2]}</td>
+                <td>${material[3] || 'N/A'}</td>
+                <td>${material[4]}</td>
+                <td>${material[5] || 'N/A'}</td>
+                <td>${material[6] || 'N/A'}</td>
+                <td>${material[7] || 'N/A'}</td>
+                <td>${material[8] || 'N/A'}</td>
+                <td>${material[9] || 'N/A'}</td>
+                <td>${material[10] || 'N/A'}</td>
+                <td>$${(material[11] !== null ? material[11] : 'N/A')}</td>
+                <td>$${(material[12] !== null ? material[12] : 'N/A')}</td>
+                <td>$${(material[13] !== null ? material[13] : 'N/A')}</td>
+                <td>$${(material[14] !== null ? material[14] : 'N/A')}</td>
+                <td>${material[15]}</td>
+                <td>${cantidadActual}</td>
+                <td>${minimo}</td>
+                <td>${maximo}</td>
+                <td class="${disponibilidadClass}">${disponibilidadTexto}</td>
+                <td>${material[17] || 'N/A'}</td>
+                <td>
+                    <button class="accion-btn edit-btn" data-id="${material[0]}">Editar</button>
+                 ${USER_ROLE !== 'employee' ? 
+
+                    `<button class="accion-btn delete-btn" data-id="${material[0]}">Eliminar</button>`
+                       :
+                    ''
+                }
+                    <button class="accion-btn code-btn" data-id="${material[0]}">Código Barras</button>
+                </td>
+            `;
+        });
+    }
+
+    async function saveMaterial() {
+        const data = {
+            ubicacion: document.getElementById('ubicacion').value,
+            nombre_producto: document.getElementById('nombre_producto').value,
+            proveedor: document.getElementById('proveedor').value,
+            descripcion: document.getElementById('descripcion').value,
+            marca1: document.getElementById('marca1').value,
+            marca2: document.getElementById('marca2').value,
+            marca3: document.getElementById('marca3').value,
+            codigo1: document.getElementById('codigo1').value,
+            codigo2: document.getElementById('codigo2').value,
+            codigo3: document.getElementById('codigo3').value,
+            valor_unitario1: parseFloat(document.getElementById('valor_unitario1').value) || null,
+            valor_unitario2: parseFloat(document.getElementById('valor_unitario2').value) || null,
+            valor_unitario3: parseFloat(document.getElementById('valor_unitario3').value) || null,
+            valor_unitario4: parseFloat(document.getElementById('valor_unitario4').value) || null,
+            minimo: parseInt(document.getElementById('minimo').value) || null,
+            maximo: parseInt(document.getElementById('maximo').value) || null,
+            cantidad_a_prestar: parseInt(document.getElementById('cantidad_a_prestar').value) || 0,
+            cantidad_actual: parseInt(document.getElementById('cantidad_actual').value) || 0,
+            observaciones: document.getElementById('observaciones').value
+        };
+
+        const id = materialIdInput.value;
+        const url = id ? `/actualizar_material_estanteria/${id}` : '/guardar_material_estanteria';
+        const method = 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (response.ok) {
+                showMessage(result.message || 'Operación exitosa.', 'success');
+                clearForm();
+                fetchMaterial();
+            } else {
+                showMessage(result.message || 'Error en la operación.', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving/updating material:', error);
+            showMessage('Error de conexión o servidor.', 'error');
+        }
+    }
+
+    async function editMaterial(id) {
+        try {
+            const response = await fetch(`/obtener_material_estanteria/${id}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const material = await response.json();
+            
+            materialIdInput.value = material[0];
+            document.getElementById('ubicacion').value = material[1] || '';
+            document.getElementById('nombre_producto').value = material[2] || '';
+            document.getElementById('proveedor').value = material[3] || '';
+            document.getElementById('descripcion').value = material[4] || '';
+            document.getElementById('marca1').value = material[5] || '';
+            document.getElementById('marca2').value = material[6] || '';
+            document.getElementById('marca3').value = material[7] || '';
+            document.getElementById('codigo1').value = material[8] || '';
+            document.getElementById('codigo2').value = material[9] || '';
+            document.getElementById('codigo3').value = material[10] || '';
+            document.getElementById('valor_unitario1').value = material[11] !== null ? material[11] : '';
+            document.getElementById('valor_unitario2').value = material[12] !== null ? material[12] : '';
+            document.getElementById('valor_unitario3').value = material[13] !== null ? material[13] : '';
+            document.getElementById('valor_unitario4').value = material[14] !== null ? material[14] : '';
+            document.getElementById('cantidad_a_prestar').value = material[15] !== null ? material[15] : '';
+            document.getElementById('cantidad_actual').value = material[16] !== null ? material[16] : '';
+            document.getElementById('observaciones').value = material[17] || '';
+            document.getElementById('minimo').value = material[18] !== null ? material[18] : '';
+            document.getElementById('maximo').value = material[19] !== null ? material[19] : '';
+
+            saveBtn.textContent = 'Actualizar material';
+            cancelEditBtn.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error fetching material for edit:', error);
+            showMessage('Error al cargar los datos del material para edición.', 'error');
+        }
+    }
+
+    async function deleteMaterial(id) {
+        try {
+            const response = await fetch(`/eliminar_material_estanteria/${id}`, { method: 'POST' });
+            const result = await response.json();
+            if (response.ok) {
+                showMessage(result.message || 'Material de estantería eliminado correctamente.', 'success');
+                fetchMaterial();
+            } else {
+                showMessage(result.message || 'Error al eliminar el material.', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting material:', error);
+            showMessage('Error de conexión al intentar eliminar el material.', 'error');
+        }
+    }
+
+    async function searchMaterial() {
+        if (!searchMaterialInput) return;
+        const searchTerm = searchMaterialInput.value.trim();
+        try {
+            const response = await fetch(`/buscar_material_estanteria?q=${encodeURIComponent(searchTerm)}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const material = await response.json();
+            renderTable(material);
+        } catch (error) {
+            console.error('Error al buscar material:', error);
+            showMessage('Error al buscar material.', 'error');
+        }
+    }
+
+    function clearForm() {
+        if (materialForm) materialForm.reset();
+        if (materialIdInput) materialIdInput.value = '';
+        if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+        if (saveBtn) saveBtn.textContent = 'Guardar material'; // 🔥 Agrega esta línea 🔥
+    }
+</script>
+</body>
+</html>

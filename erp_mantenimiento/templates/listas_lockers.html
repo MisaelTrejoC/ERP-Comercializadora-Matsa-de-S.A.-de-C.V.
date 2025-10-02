@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Matsa - Listas de Lockers</title>
+    <link rel="stylesheet"   href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <style>
+        /* CSS para el modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+    display: none; /* Oculto por defecto */
+    justify-content: center;
+    align-items: center;
+
+    /* Propiedades para la animación */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease; /* Transición para el fondo */
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+    display: flex; /* O 'block' según necesites para centrar */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    text-align: center;
+    min-width: 300px;
+    position: relative;
+    /* Aquí también puedes añadir transiciones para el contenido si quieres que suba/baje */
+    transform: translateY(-20px); /* Ejemplo: empieza un poco más abajo */
+    transition: transform 0.3s ease; /* Transición para el contenido */
+}
+
+.modal.show .modal-content {
+    transform: translateY(0); /* Vuelve a su posición normal */
+}
+
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gabeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    {% if user_role == 'admin' %}
+                    <a href="/costeos">Costeos de manufactura</a>
+                    {% endif %}
+                <!--<a href="/papeleria">Papeleria</a>-->
+                </div>
+            </li>
+            
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                {% if user_role == 'admin' %}
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+                {% endif %}
+        </ul>
+    </nav>
+<main>
+    <div class="contenido-principal">
+        <h2>Listas de lockers - Almacen</h2>
+        <div id="toastContainer" class="toast-container"></div>
+
+        
+        <form id="formulario-locker">
+            <section class="form-section">
+            <div>
+            <label for="numero_locker">Número de locker:</label>
+            <input type="text" id="numero_locker" name="numero_locker" required>
+            </div>
+
+            <div>
+            <label for="codigo_producto">Código:</label>
+            <input type="text" id="codigo_producto" name="codigo_producto">
+            </div>
+            
+            <div>
+            <label for="nombre_producto">Nombre del producto:</label>
+            <input type="text" id="nombre_producto" name="nombre_producto" required>
+            </div>
+
+            <div>
+            <label for="medida_producto">Medida del producto:</label>
+            <input type="text" id="medida_producto" name="medida_producto">
+            </div>
+
+            <div>
+            <label for="cantidad_producto">Cantidad:</label>
+            <input type="number" id="cantidad_producto" name="cantidad_producto" min="0" required>
+            </div>
+
+            <div>
+            <label for="valor_unitario">Valor unitario (VU):</label>
+            <input type="number" id="valor_unitario" name="valor_unitario" min="0" step="0.01">
+            </div>
+
+            <div>
+            <label for="stock_minimo">Mínimo:</label>
+            <input type="number" id="stock_minimo" name="stock_minimo" min="0">
+            </div>
+
+            <div>
+            <label for="stock_maximo">Máximo:</label>
+            <input type="number" id="stock_maximo" name="stock_maximo" min="0">
+            </div>
+
+            <div>
+            <label for="stock_producto">Actual:</label>
+            <input type="number" id="stock_producto" name="stock_producto" min="0">
+            </div>
+            </section>
+            <section class="form-buttons ">
+            <button type="button" onclick="guardarLocker()">Guardar Locker</button>
+            <button type="button" onclick="limpiarFormularioLocker()" class="accion-btn cancel-btn hidden">Limpiar formulario</button>
+            </section>
+        </form>
+       
+        <section class="form-section">
+        
+            <h3>Buscar Producto por Medida</h3>
+            <input type="text" id="busqueda-locker" oninput="buscarLockers()" placeholder="Buscar por codigo de producto ...">
+        <div>
+            
+        </div>
+        </section>
+        <h3>Listado de Lockers</h3>
+        <table id="tablaDatos">
+            <thead>
+                <tr>
+                    <th>Número/Nivel</th>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Medida</th>
+                    <th>Cantidad</th>
+                    <th>VU</th>
+                    <th>Mínimo</th>
+                    <th>Máximo</th>
+                    <th>Actual</th>
+                    <th>Disponibilidad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla-lockers">
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<div id="barcodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeBarcodeModal()">&times;</span>
+        <div id="barcodeContent" style="text-align: center;">
+            <h4>Código de Barras</h4>
+            <p><strong>Número de Locker:</strong> <span id="barcode-numero_locker"></span></p>
+            <p><strong>Código de Producto:</strong> <span id="barcode-codigo_producto"></span></p>
+            <p><strong>Nombre del Producto:</strong> <span id="barcode-nombre_producto"></span></p>
+            <p><strong>Medida del Producto:</strong> <span id="barcode-medida_producto"></span></p>
+            <p><strong>Cantidad de Producto:</strong> <span id="barcode-cantidad_producto"></span></p>
+            <canvas id="barcodeCanvas"></canvas>
+            <div style="margin-top: 20px;">
+                <button onclick="printBarcode()" class="accion-btn imprimir">Imprimir</button>
+                <button onclick="saveBarcodeAs()" class="accion-btn imprimir">Guardar JPG</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="deleteConfirmationModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeDeleteModal()">&times;</span>
+        <div id="deleteContent" style="text-align: center;">
+            <h4>Confirmación de Borrado</h4>
+            <p>¿Estás seguro que quieres eliminar <span id="delete-nombre_producto"></span>, con medidas <span id="delete-medida_producto"></span>?</p>
+            <div style="margin-top: 20px;">
+                <button onclick="confirmDelete()" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeDeleteModal()" class="accion-btn code">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bwip-js@latest/dist/bwip-js.min.js"></script>
+<script>
+        let lockerAEditarId = null; 
+        let allLockersData = [];
+        const USER_ROLE = "{{ user_role }}"; 
+
+        // Función para mostrar un mensaje tipo "toast"
+        function showMessage(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                console.error("Error: El elemento 'toastContainer' no se encontró en el DOM.");
+                return;
+            }
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+        // Function to close the barcode modal
+function closeBarcodeModal() {
+    const barcodeModal = document.getElementById('barcodeModal');
+    if (barcodeModal) {
+        barcodeModal.classList.remove('show');
+        // Esperar a que la transición termine (300ms) antes de cambiar el display
+        setTimeout(() => {
+            barcodeModal.style.display = 'none';
+        }, 300); // Esto debe coincidir con la duración de la transición en tu CSS
+    } else {
+        console.error("Error: The element with ID 'barcodeModal' was not found.");
+    }
+}
+let lockerToDelete = null;
+
+// Función para mostrar el modal de confirmación de borrado
+function showDeleteModal(id) {
+    const locker = allLockersData.find(item => item[0] === id);
+    if (!locker) {
+        showMessage("Locker no encontrado.", "error");
+        return;
+    }
+
+    // Guardar los datos del locker en una variable global para usarlos después
+    lockerToDelete = locker;
+
+    // Actualizar el contenido del modal de confirmación
+    document.getElementById('delete-nombre_producto').textContent = locker[3] || 'N/A';
+    document.getElementById('delete-medida_producto').textContent = locker[4] || 'N/A';
+
+    // Mostrar el modal con la animación
+    const modal = document.getElementById('deleteConfirmationModal');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+// Función para cerrar el modal de confirmación de borrado
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteConfirmationModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        lockerToDelete = null; // Limpiar la variable
+    }, 300);
+}
+
+// Función para confirmar la eliminación
+// Función para confirmar la eliminación y hacer la llamada al servidor
+function confirmDelete() {
+    if (lockerToDelete) {
+        const idToDelete = lockerToDelete[0];
+        
+        // Llamada al endpoint para eliminar el registro en la base de datos
+        fetch(`/eliminar_locker/${idToDelete}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(responseData => {
+            // Cerrar el modal de confirmación
+            closeDeleteModal();
+            
+            // Recargar la tabla con la lista actualizada
+            cargarListaLockers();
+
+            // Mostrar un mensaje de éxito
+            showMessage(responseData.message, "success");
+        })
+        .catch(error => {
+            console.error('Error al borrar el locker:', error);
+            showMessage("Error al borrar el locker.", "error");
+        });
+    }
+}        // Función para verificar la disponibilidad
+        function checkDisponibilidad(cantidadActual, minimo, maximo) {
+            const actual = parseInt(cantidadActual);
+            const min = parseInt(minimo);
+            const max = parseInt(maximo);
+            if (isNaN(actual) || isNaN(min) || isNaN(max)) {
+                return { text: 'N/A', class: '' };
+            }
+            if (actual <= 0) {
+                return { text: 'No Disponible', class: 'no-disponible' };
+            }
+            if (actual < min) {
+                return { text: 'Bajo Stock', class: 'bajo-stock' };
+            }
+            if (actual > max) {
+                return { text: 'Sobre Stock', class: 'sobre-stock' };
+            }
+            return { text: 'Disponible', class: 'disponible' };
+        }
+
+        function guardarLocker() {
+            const data = {
+                numero_locker: document.getElementById("numero_locker").value,
+                codigo_producto: document.getElementById("codigo_producto").value,
+                nombre_producto: document.getElementById("nombre_producto").value,
+                medida_producto: document.getElementById("medida_producto").value,
+                cantidad_producto: parseInt(document.getElementById("cantidad_producto").value),
+                valor_unitario: parseFloat(document.getElementById("valor_unitario").value),
+                stock_minimo: parseInt(document.getElementById("stock_minimo").value),
+                stock_maximo: parseInt(document.getElementById("stock_maximo").value),
+                stock_producto: parseInt(document.getElementById("stock_producto").value)
+            };
+
+            fetch('/guardar_locker', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(responseData => {
+                showMessage("Información del locker guardada correctamente", "success");
+                cargarListaLockers();
+                limpiarFormularioLocker();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage("Error al guardar la información del locker.", "error");
+            });
+        }
+
+        function limpiarFormularioLocker() {
+            document.getElementById("numero_locker").value = "";
+            document.getElementById("codigo_producto").value = "";
+            document.getElementById("nombre_producto").value = "";
+            document.getElementById("medida_producto").value = "";
+            document.getElementById("cantidad_producto").value = "";
+            document.getElementById("valor_unitario").value = "";
+            document.getElementById("stock_minimo").value = "";
+            document.getElementById("stock_maximo").value = "";
+            document.getElementById("stock_producto").value = "";
+            lockerAEditarId = null;
+            const guardarBtn = document.querySelector('#formulario-locker button[onclick^="actualizarLocker"]');
+            if (guardarBtn) {
+                guardarBtn.textContent = "Guardar Locker";
+                guardarBtn.onclick = guardarLocker;
+            }
+            const limpiarBtn = document.querySelector('#formulario-locker button[onclick="limpiarFormularioLocker()"]');
+            if (limpiarBtn) {
+                limpiarBtn.classList.add('hidden');
+            }
+        }
+
+        function cargarListaLockers() {
+            fetch('/obtener_lista_lockers')
+                .then(response => response.json())
+                .then(data => {
+                    allLockersData = data;
+                    mostrarLockersEnTabla(data);
+                })
+                .catch(error => {
+                    console.error('Error al cargar la lista de lockers:', error);
+                    showMessage("Error al cargar la lista de lockers.", "error");
+                });
+        }
+        
+
+        function mostrarLockersEnTabla(data) {
+            const cuerpoTabla = document.getElementById("cuerpo-tabla-lockers");
+            cuerpoTabla.innerHTML = "";
+            console.log('datos recibidos: ',data);
+            data.forEach(item => {
+                console.log('fila de datos: ', item)
+                const fila = cuerpoTabla.insertRow();
+                fila.dataset.id = item[0];
+                fila.insertCell().textContent = item[1]; // numero_locker
+                fila.insertCell().textContent = item[2] || ''; // codigo_producto
+                fila.insertCell().textContent = item[3]; // nombre_producto
+                fila.insertCell().textContent = item[4] || ''; // medida_producto
+                fila.insertCell().textContent = item[5]; // cantidad_producto
+                fila.insertCell().textContent = item[6] !== null ? parseFloat(item[6]).toFixed(2) : ''; // valor_unitario
+                fila.insertCell().textContent = item[7] || ''; // stock_minimo
+                fila.insertCell().textContent = item[8] || ''; // stock_maximo
+                fila.insertCell().textContent = item[9] !== null ? item[9] : ''; // stock_producto
+
+                const stockActual = parseInt(item[9]);
+                const stockMinimo = parseInt(item[7]);
+                const stockMaximo = parseInt(item[8]);
+
+                const disponibilidadStatus = checkDisponibilidad(stockActual, stockMinimo, stockMaximo);
+                const disponibilidadCell = fila.insertCell();
+                disponibilidadCell.textContent = disponibilidadStatus.text;
+                if (disponibilidadStatus.class) {
+                    disponibilidadCell.classList.add(disponibilidadStatus.class);
+                }
+
+                const accionesCell = fila.insertCell();
+                const botonEditar = document.createElement("button");
+                botonEditar.textContent = "Editar";
+                botonEditar.classList.add("accion-btn" , "edit");
+                botonEditar.onclick = () => editarLocker(item[0]);
+                accionesCell.appendChild(botonEditar);
+
+                if(USER_ROLE !== 'employee'){
+
+                const botonBorrar = document.createElement("button");
+                botonBorrar.textContent = "Borrar";
+                botonBorrar.classList.add("accion-btn" , "delete")
+                botonBorrar.onclick = () => showDeleteModal(item[0]);
+                accionesCell.appendChild(botonBorrar);
+                }
+                // 💥 Botón para el código de barras 💥
+                const botonBarcode = document.createElement("button");
+                botonBarcode.textContent = "Código de barras";
+                botonBarcode.classList.add("accion-btn" , "code");
+                botonBarcode.onclick = () => showBarcodeModal(item[0]);
+                accionesCell.appendChild(botonBarcode);
+            });
+        }
+
+        function buscarLockers() {
+            const terminoBusqueda = document.getElementById('busqueda-locker').value.toLowerCase();
+            console.log('Término de búsqueda:', terminoBusqueda);
+            if (terminoBusqueda.trim() === "") {
+                mostrarLockersEnTabla(allLockersData);
+                return;
+            }
+            const filteredLockers = allLockersData.filter(item => {
+                const numeroLocker = String(item[1] || '').toLowerCase();
+                const codigoProducto = String(item[2] || '').toLowerCase();
+                const nombreProducto = String(item[3] || '').toLowerCase();
+                const medidaProducto = String(item[4] || '').toLowerCase();
+                return numeroLocker.includes(terminoBusqueda) ||
+                    codigoProducto.includes(terminoBusqueda) ||
+                    nombreProducto.includes(terminoBusqueda) ||
+                    medidaProducto.includes(terminoBusqueda);
+            });
+            mostrarLockersEnTabla(filteredLockers);
+        }
+
+        function editarLocker(id) {
+            lockerAEditarId = id;
+            fetch(`/obtener_locker/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("numero_locker").value = data[1];
+                    document.getElementById("codigo_producto").value = data[2] || '';
+                    document.getElementById("nombre_producto").value = data[3];
+                    document.getElementById("medida_producto").value = data[4] || '';
+                    document.getElementById("cantidad_producto").value = data[5];
+                    document.getElementById("valor_unitario").value = data[6] !== null ? parseFloat(data[6]).toFixed(2) : '';
+                    document.getElementById("stock_minimo").value = data[7] || '';
+                    document.getElementById("stock_maximo").value = data[8] || '';
+                    document.getElementById("stock_producto").value = data[9] || '';
+
+                    const guardarBtn = document.querySelector('#formulario-locker button[onclick="guardarLocker()"]');
+                    if (guardarBtn) {
+                        guardarBtn.textContent = "Actualizar locker";
+                        guardarBtn.onclick = actualizarLocker;
+                    }
+                    const limpiarBtn = document.querySelector('#formulario-locker button[onclick="limpiarFormularioLocker()"]');
+                    if (limpiarBtn) {
+                        limpiarBtn.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al obtener locker:', error);
+                    showMessage("Error al obtener la información del locker.", "error");
+                });
+        }
+
+        function actualizarLocker() {
+            if (!lockerAEditarId) {
+                console.error("No se ha seleccionado ningún locker para actualizar.");
+                return;
+            }
+            
+            const cantidadProductoEl = document.getElementById("cantidad_producto");
+            const stockProductoEl = document.getElementById("stock_producto");
+            const stockMinimoEl = document.getElementById("stock_minimo");
+            const stockMaximoEl = document.getElementById("stock_maximo");
+
+            const cantidadProducto = parseInt(cantidadProductoEl.value);
+            const stockProducto = parseInt(stockProductoEl.value);
+            const stockMinimo = parseInt(stockMinimoEl.value);
+            const stockMaximo = parseInt(stockMaximoEl.value);
+
+            if (cantidadProducto > stockProducto) {
+                showMessage("Acción no realizada. La cantidad no debe ser mayor que el stock actual.", "error");
+                return;
+            }
+
+            const nuevoStockProducto = stockProducto - cantidadProducto;
+            stockProductoEl.value = nuevoStockProducto;
+
+            const data = {
+                numero_locker: document.getElementById("numero_locker").value,
+                codigo_producto: document.getElementById("codigo_producto").value,
+                nombre_producto: document.getElementById("nombre_producto").value,
+                medida_producto: document.getElementById("medida_producto").value,
+                cantidad_producto: cantidadProducto,
+                valor_unitario: parseFloat(document.getElementById("valor_unitario").value),
+                stock_minimo: stockMinimo,
+                stock_maximo: stockMaximo,
+                stock_producto: nuevoStockProducto
+            };
+
+            fetch(`/actualizar_locker/${lockerAEditarId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(responseData => {
+                const disponibilidadStatus = checkDisponibilidad(nuevoStockProducto, stockMinimo, stockMaximo);
+                if (disponibilidadStatus.text === 'Bajo Stock') {
+                    showMessage('Préstamo realizado. Se necesita comprar nuevo material.', 'info');
+                } else if (disponibilidadStatus.text === 'No Disponible') {
+                    showMessage('Préstamo realizado. No hay material disponible.', 'error');
+                } else {
+                    showMessage(responseData.message || "Información del locker actualizada correctamente.", "success");
+                }
+                
+                cargarListaLockers();
+                limpiarFormularioLocker();
+                lockerAEditarId = null;
+
+                const limpiarBtn = document.querySelector('#formulario-locker button[onclick="limpiarFormularioLocker()"]');
+                if (limpiarBtn) {
+                    limpiarBtn.classList.add('hidden');
+                }
+
+            })
+            .catch(error => {
+                console.error('Error al actualizar locker:', error);
+                showMessage("Error al actualizar locker.", "error");
+            });
+        }
+
+        function borrarLocker(id) {
+            if (confirm("¿Estás seguro de que quieres borrar este registro de locker?")) {
+                fetch(`/eliminar_locker/${id}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(responseData => {
+                    showMessage(responseData.message, "success");
+                    cargarListaLockers();
+                })
+                .catch(error => {
+                    console.error('Error al borrar el locker:', error);
+                    showMessage("Error al borrar el locker.", "error");
+                });
+            }
+        }
+        
+        // Función para mostrar el modal del código de barras
+        function showBarcodeModal(id) {
+    const locker = allLockersData.find(item => item[0] === id);
+    if (!locker) {
+        showMessage("Locker no encontrado.", "error");
+        return;
+    }
+
+    const numeroLocker = locker[1] || 'N/A';
+    const codigoProducto = locker[2];
+    const nombreProducto = locker[3] || 'N/A';
+    const medidaProducto = locker[4] || 'N/A';
+    const cantidadActualProducto = locker[9] || 'N/A';
+
+    // Actualizar el contenido del modal
+    document.getElementById('barcode-numero_locker').textContent = numeroLocker;
+    document.getElementById('barcode-codigo_producto').textContent = codigoProducto || 'N/A';
+    document.getElementById('barcode-nombre_producto').textContent = nombreProducto;
+    document.getElementById('barcode-medida_producto').textContent = medidaProducto;
+    document.getElementById('barcode-cantidad_producto').textContent = cantidadActualProducto;
+
+    const barcodeModal = document.getElementById('barcodeModal');
+    if (barcodeModal) {
+        // Paso 1: Hacer el modal visible antes de la animación
+        barcodeModal.style.display = 'flex';
+        
+        // Paso 2: Usar un pequeño retraso para permitir que la animación se dispare
+        setTimeout(() => {
+            barcodeModal.classList.add('show');
+        }, 10); 
+    }
+
+    // El resto de tu lógica para generar el código de barras aquí
+    setTimeout(() => {
+        const canvasElement = document.getElementById('barcodeCanvas');
+        if (canvasElement) {
+            try {
+                const barcodeValue = String(codigoProducto || '').trim();
+                if (barcodeValue.length > 0) {
+                    bwipjs.toCanvas(canvasElement, {
+                        bcid: 'code128',
+                        text: barcodeValue,
+                        scale: 2,
+                        height: 10,
+                        includetext: true,
+                        textxalign: 'center',
+                    });
+                } else {
+                    canvasElement.style.color = "red";
+                    canvasElement.textContent = "No hay un código de producto válido para generar el código de barras.";
+                }
+            } catch (e) {
+                console.error("Error al generar el código de barras:", e);
+                canvasElement.style.color = "red";
+                canvasElement.textContent = "Error: No se pudo generar el código de barras.";
+            }
+        } else {
+            console.error("Error: El elemento con ID 'barcodeCanvas' no se encontró en el DOM.");
+        }
+    }, 50);
+}
+
+        // Función para imprimir el código de barras
+        // Function to print the barcode
+// Función para imprimir el código de barras
+// Función para imprimir el código de barras
+function printBarcode() {
+    // Retraso de 50ms para asegurar que el canvas se ha renderizado
+    setTimeout(() => {
+        const canvas = document.getElementById('barcodeCanvas');
+        if (!canvas) {
+            console.error("El elemento canvas no fue encontrado para imprimir.");
+            return;
+        }
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            showMessage("Por favor, permite las ventanas emergentes para imprimir.", "error");
+            return;
+        }
+
+        printWindow.document.write('<!DOCTYPE html>');
+        printWindow.document.write('<html>');
+        printWindow.document.write('<head>');
+        printWindow.document.write('<title>Imprimir Código de Barras</title>');
+        printWindow.document.write('<style>body { text-align: center; } img { max-width: 100%; height: auto; }</style>');
+        printWindow.document.write('</head>');
+        printWindow.document.write('<body>');
+        printWindow.document.write('<img src="' + dataUrl + '" alt="Código de Barras">');
+        printWindow.document.write('<script>');
+        printWindow.document.write('window.onload = function() { window.print(); window.close(); };');
+        printWindow.document.write('</' + 'script>');
+        printWindow.document.write('</body>');
+        printWindow.document.write('</html>');
+        printWindow.document.close();
+    }, 50);
+}        // Función para guardar el código de barras como JPG
+// Función para guardar el código de barras como JPG
+function saveBarcodeAs() {
+    // Retraso de 50ms para asegurar que el canvas se ha renderizado
+    setTimeout(() => {
+        const canvas = document.getElementById('barcodeCanvas');
+        if (!canvas) {
+            console.error("El elemento canvas no fue encontrado.");
+            return;
+        }
+
+        const dataURL = canvas.toDataURL('image/jpeg', 1.0);
+
+        const link = document.createElement('a');
+        link.download = `codigo_de_barras.jpeg`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }, 50);
+}
+        
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Obtener elementos
+    const profileToggle = document.querySelector('.profile-toggle');
+    const profileContainer = document.querySelector('.profile-menu-container-top-right');
+    const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+    if (profileToggle && profileMenu && profileContainer) {
+        profileToggle.addEventListener('click', () => {
+            // Oculta/Muestra el menú usando la clase 'hidden'
+            profileMenu.classList.toggle('hidden'); 
+            // Añade/Remueve la clase 'active' para girar el icono de la flecha
+            profileContainer.classList.toggle('active');
+        });
+    }
+    document.addEventListener('click', (event) => {
+                
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+        // El resto del código que ya tiene para el DOMContentLoaded (cargarListaLockers) debe ir aquí:
+        cargarListaLockers();
+    });
+</script>
+</body>
+</html>

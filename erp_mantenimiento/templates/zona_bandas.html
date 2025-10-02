@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <title>Matsa - Sistema de base de datos</title>
+    <link rel="stylesheet"  href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <style>
+        .barcode-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+#barcodeCanvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Estilos para los botones dentro del modal */
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Estilos de impresión para ocultar todo excepto el modal */
+@media print {
+    body > *:not(#barcodeModal) {
+        display: none;
+    }
+    #barcodeModal {
+        display: block !important;
+        position: static;
+        width: auto;
+        height: auto;
+        background: none;
+        padding: 0;
+    }
+    .modal-content {
+        box-shadow: none;
+        padding: 0;
+    }
+    .modal-buttons, .close-button {
+        display: none;
+    }
+}
+            .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* Propiedades para la animación */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        /* La clase `show` activará la visibilidad y opacidad */
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        max-width: 400px;
+        min-width: 300px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+        #toastContainer {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1001;
+    }
+    
+    .toast {
+        min-width: 250px;
+        max-width: 400px;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .toast.show {
+        animation: slideIn 0.5s forwards;
+    }
+    
+    .toast.hide {
+        animation: fadeOut 0.5s forwards;
+    }
+
+    .toast.info {
+        background-color: #2196F3; /* Azul */
+    }
+    
+    .toast.success {
+        background-color: #4CAF50; /* Verde */
+    }
+    
+    .toast.error {
+        background-color: #F44336; /* Rojo */
+    }    .legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    font-size: 1.1em;
+    }
+
+         @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+  <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gambeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    {% if user_role == 'admin' %}
+                    <a href="/costeos">Costeos de manufactura</a>
+                    {% endif %}          
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            {% if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+ <main>
+        <h2>Gestión de Bandas</h2>
+
+        <!-- Toast Container for messages -->
+        <div id="toastContainer" class="toast-container"></div>
+
+        <!-- Formulario de Bandas -->
+        <div>
+            <form id="bandaForm">
+                <section class="form-section">
+                <input type="hidden" id="bandaId">
+                <div>
+                    <label for="nombre_producto">Nombre del Producto</label>
+                    <input type="text" id="nombre_producto" name="nombre_producto" required>
+                </div>
+                <div>
+                    <label for="marca_producto">Marca del Producto</label>
+                    <input type="text" id="marca_producto" name="marca_producto">
+                </div>
+                <div>
+                    <label for="columna">Columna</label>
+                    <input type="text" id="columna" name="columna" required>
+                </div>
+                <div>
+                    <label for="codigo_proveedor">Código de Proveedor</label>
+                    <input type="text" id="codigo_proveedor" name="codigo_proveedor" required>
+                </div>
+                <div>
+                    <label for="cantidad_prestada">Cantidad a Prestar</label>
+                    <input type="number" id="cantidad_prestada" name="cantidad_prestada" required min="0">
+                </div>
+                <div>
+                    <label for="cantidad_actual">Cantidad Actual</label>
+                    <input type="number" id="cantidad_actual" name="cantidad_actual" required min="0">
+                </div>
+                </section>
+                <div class="form-buttons">
+                    <button type="submit" id="saveBtn">Guardar Banda</button>
+                    <button type="button" id="cancelEdit" class="accion-btn cancel hidden">Cancelar Edición</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sección de Búsqueda -->
+        <section class="form-buttons">
+        <section class="form-section">
+            <h3>Buscar Bandas</h3>
+            <input type="text" id="searchBandaInput" placeholder="Buscar por columna o código de proveedor...">
+            </section>
+        </section>
+
+        <!-- Tabla de Bandas -->
+        <div>
+            <h2>Bandas Registradas</h2>
+            <table id="tablaDatos">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre Producto</th>
+                        <th>Marca Producto</th>
+                        <th>Columna</th>
+                        <th>Código Proveedor</th>
+                        <th>Cantidad Prestada</th>
+                        <th>Cantidad Actual</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="bandasTableBody">
+                    <!-- Las filas de bandas se insertarán aquí por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar esta banda?</p>
+            <div>
+                <button id="confirmDeleteBtn" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeModal()" class="accion-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="barcodeModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeBarcodeModal()">&times;</span>
+        <h3>Código de Barras</h3>
+        <div id="barcode-info">
+            <p><strong>Nombre:</strong> <span id="barcode-nombre"></span></p>
+            <p><strong>Columna:</strong> <span id="barcode-columna"></span></p>
+            <p><strong>Código Proveedor:</strong> <span id="barcode-codigo"></span></p>
+            <p><strong>Cantidad Actual:</strong> <span id="barcode-cantidad"></span></p>
+        </div>
+        <div class="barcode-container">
+            <canvas id="barcodeCanvas"></canvas>
+        </div>
+        <div class="modal-buttons">
+            <button id="printBarcodeBtn" class="accion-btn imprimir">Imprimir</button>
+            <a id="downloadBarcodeBtn" class="accion-btn imprimir" download="barcode.png">Guardar</a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        const USER_ROLE = "{{ user_role }}"; 
+
+        // Declaración de variables, asegurando que se obtienen los elementos
+        const bandaForm = document.getElementById('bandaForm');
+        const bandaIdInput = document.getElementById('bandaId');
+        const formTitle = document.getElementById('formTitle');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const bandasTableBody = document.getElementById('bandasTableBody');
+        const searchBandaInput = document.getElementById('searchBandaInput');
+        const toastContainer = document.getElementById('toastContainer'); // Contenedor para toasts
+        const saveBtn = document.getElementById('saveBtn');
+
+        // Modal elements
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let bandaToDeleteId = null; // Variable para almacenar el ID de la banda a eliminar
+
+        const barcodeModal = document.getElementById('barcodeModal');
+        const barcodeCanvas = document.getElementById('barcodeCanvas');
+        const barcodeNombre = document.getElementById('barcode-nombre');
+        const barcodeColumna = document.getElementById('barcode-columna');
+        const barcodeCodigo = document.getElementById('barcode-codigo');
+        const barcodeCantidad = document.getElementById('barcode-cantidad');
+        const printBarcodeBtn = document.getElementById('printBarcodeBtn');
+        const downloadBarcodeBtn = document.getElementById('downloadBarcodeBtn');
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+                    // 1. Obtener elementos
+            const profileToggle = document.querySelector('.profile-toggle');
+            const profileContainer = document.querySelector('.profile-menu-container-top-right');
+            const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+            if (profileToggle && profileMenu && profileContainer) {
+                profileToggle.addEventListener('click', () => {
+                    // Oculta/Muestra el menú usando la clase 'hidden'
+                    profileMenu.classList.toggle('hidden'); 
+                    // Añade/Remueve la clase 'active' para girar el icono de la flecha
+                    profileContainer.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+
+            fetchBandas();
+
+            // Verificaciones defensivas para los elementos principales
+            if (bandaForm) {
+                bandaForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await saveBanda();
+                });
+            } else {
+                console.error("Error: El elemento 'bandaForm' no se encontró en el DOM.");
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', clearForm);
+            } else {
+                 console.error("Error: El elemento 'cancelEditBtn' no se encontró en el DOM.");
+            }
+           
+            if (searchBandaInput) {
+                searchBandaInput.addEventListener('input', searchBandas);
+            } else {
+                console.error("Error: El elemento 'searchBandaInput' no se encontró en el DOM.");
+            }
+            
+            if (bandasTableBody) {
+                bandasTableBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) {
+                        const id = e.target.dataset.id;
+                        editBanda(id);
+                    } else if (e.target.classList.contains('delete-btn')) {
+                        const id = e.target.dataset.id;
+                        openModal(id);
+                    } else if (e.target.classList.contains('code-btn')) {
+                        const id = e.target.dataset.id;
+                        showBarcodeModal(id);
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'bandasTableBody' no se encontró en el DOM.");
+            }
+
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (bandaToDeleteId) {
+                        await deleteBanda(bandaToDeleteId);
+                        closeModal();
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'confirmDeleteBtn' no se encontró en el DOM.");
+            }
+
+            // Toggle para el menú desplegable (si tienes uno en tu nav)
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function() {
+                    const dropdownMenu = this.nextElementSibling;
+                    if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                });
+            }
+        });
+
+        // Función para mostrar mensajes como "toast"
+        function showMessage(message, type) {
+            if (!toastContainer) {
+                console.error("Error: El elemento 'toastContainer' no se encontró en el DOM. Mensaje: " + message);
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            // Eliminar el toast después de 5 segundos (coincide con la duración de la animación CSS)
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Función para abrir el modal de confirmación
+        // Tu función para abrir el modal
+function openModal(id) {
+    bandaToDeleteId = id;
+    deleteConfirmModal.style.display = 'flex'; // Primero, hazlo visible
+    void deleteConfirmModal.offsetWidth; // Esto fuerza el reflow del navegador, necesario para la animación
+    deleteConfirmModal.classList.add('show'); // Luego, añade la clase 'show' para la transición
+}
+
+// Tu función para cerrar el modal
+function closeModal() {
+    deleteConfirmModal.classList.remove('show'); // Quita la clase 'show' para la animación de salida
+    setTimeout(() => {
+        deleteConfirmModal.style.display = 'none'; // Después de que la animación termine, hazlo invisible
+        bandaToDeleteId = null;
+    }, 300); // 300ms es la duración de tu transición CSS
+}
+function closeBarcodeModal() {
+    barcodeModal.classList.remove('show');
+    setTimeout(() => {
+        barcodeModal.style.display = 'none';
+    }, 300);
+}
+
+// Add event listener for the print button
+printBarcodeBtn.addEventListener('click', () => {
+    const originalContents = document.body.innerHTML;
+    const modalContents = document.getElementById('barcodeModal').innerHTML;
+    
+    // Temporarily replace body content for printing
+    document.body.innerHTML = modalContents;
+    
+    // Print the content
+    window.print();
+    
+    // Restore the original content
+    document.body.innerHTML = originalContents;
+    window.location.reload(); // Reload to re-attach all event listeners
+});
+        // Función para obtener y mostrar todas las bandas
+        async function fetchBandas() {
+            try {
+                const response = await fetch('/obtener_bandas');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const bandas = await response.json();
+                renderTable(bandas);
+            } catch (error) {
+                console.error('Error al obtener bandas:', error);
+                showMessage('Error al cargar las bandas.', 'error');
+            }
+        }
+
+        // Función para renderizar la tabla
+        function renderTable(bandas) {
+            if (!bandasTableBody) {
+                console.error("Error: El elemento 'bandasTableBody' no se encontró en el DOM, no se puede renderizar la tabla.");
+                return;
+            }
+            bandasTableBody.innerHTML = ''; 
+            if (bandas.length === 0) {
+                const row = bandasTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 8; 
+                cell.textContent = 'No hay bandas registradas.';
+                cell.style.textAlign = 'center'; 
+                return;
+            }
+            bandas.forEach((banda) => {
+                const row = bandasTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${banda[0]}</td>
+                    <td>${banda[1]}</td>
+                    <td>${banda[2] || 'N/A'}</td>
+                    <td>${banda[3]}</td>
+                    <td>${banda[4]}</td>
+                    <td>${banda[5]}</td>
+                    <td>${banda[6]}</td>
+                    <td>
+                        <button class="accion-btn edit-btn" data-id="${banda[0]}">Editar</button>
+                        ${USER_ROLE !== 'employee' ? 
+                        `<button class="accion-btn delete-btn" data-id="${banda[0]}">Eliminar</button>`
+                        :
+                        ''
+                        }
+                        <button class="accion-btn code-btn" data-id="${banda[0]}">Código de barras</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Función para guardar o actualizar una banda
+        async function saveBanda() {
+            // Verificaciones defensivas para los elementos del formulario
+            const nombreProductoEl = document.getElementById('nombre_producto');
+            const marcaProductoEl = document.getElementById('marca_producto');
+            const columnaEl = document.getElementById('columna');
+            const codigoProveedorEl = document.getElementById('codigo_proveedor');
+            const cantidadPrestadaEl = document.getElementById('cantidad_prestada');
+            const cantidadActualEl = document.getElementById('cantidad_actual');
+
+            if (!bandaIdInput || !nombreProductoEl || !columnaEl || !codigoProveedorEl || !cantidadPrestadaEl || !cantidadActualEl) {
+                showMessage('Error: Faltan elementos del formulario en el DOM.', 'error');
+                return;
+            }
+
+            const id = bandaIdInput.value;
+            const url = id ? `/actualizar_banda/${id}` : '/guardar_banda';
+            const method = 'POST';
+
+            const data = {
+                nombre_producto: nombreProductoEl.value,
+                marca_producto: marcaProductoEl ? marcaProductoEl.value : '', // Manejo de marca_producto opcional
+                columna: columnaEl.value,
+                codigo_proveedor: codigoProveedorEl.value,
+                cantidad_prestada: parseInt(cantidadPrestadaEl.value),
+                cantidad_actual: parseInt(cantidadActualEl.value)
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message || 'Operación exitosa.', 'success');
+                    clearForm();
+                    fetchBandas();
+                } else {
+                    showMessage(result.message || 'Error en la operación.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al guardar/actualizar la banda:', error);
+                showMessage('Error de conexión o servidor.', 'error');
+            }
+        }
+
+        // Función para cargar los datos de una banda en el formulario para edición
+        async function editBanda(id) {
+            try {
+                const response = await fetch(`/obtener_banda/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const banda = await response.json();
+                
+                // Aplicar verificaciones defensivas aquí
+                if (bandaIdInput) bandaIdInput.value = banda[0];
+                if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = banda[1];
+                if (document.getElementById('marca_producto')) document.getElementById('marca_producto').value = banda[2] || '';
+                if (document.getElementById('columna')) document.getElementById('columna').value = banda[3];
+                if (document.getElementById('codigo_proveedor')) document.getElementById('codigo_proveedor').value = banda[4];
+                if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = banda[5];
+                if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = banda[6];
+
+                if (saveBtn) saveBtn.textContent = 'Actualizar banda'; // 🔥 Agrega esta línea 🔥
+                if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error al obtener la banda para edición:', error);
+                showMessage('Error al cargar los datos de la banda para edición.', 'error');
+            }
+        }
+
+        // Función para eliminar una banda
+        async function deleteBanda(id) {
+            try {
+                const response = await fetch(`/eliminar_banda/${id}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage(result.message || 'Banda eliminada correctamente.', 'success');
+                    fetchBandas();
+                } else {
+                    showMessage(result.message || 'Error al eliminar la banda.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al eliminar la banda:', error);
+                showMessage('Error de conexión al intentar eliminar la banda.', 'error');
+            }
+        }
+
+        // Función para buscar bandas (ahora se activa al escribir)
+        async function searchBandas() {
+            if (!searchBandaInput) {
+                console.error("Error: El elemento 'searchBandaInput' no se encontró en el DOM, no se puede buscar.");
+                return;
+            }
+            const searchTerm = searchBandaInput.value.trim();
+            try {
+                const response = await fetch(`/buscar_bandas?q=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const bandas = await response.json();
+                renderTable(bandas);
+            } catch (error) {
+                console.error('Error al buscar bandas:', error);
+                showMessage('Error al buscar bandas.', 'error');
+            }
+        }
+
+        // Función para limpiar el formulario y volver al modo de agregar
+        function clearForm() {
+            if (bandaForm) bandaForm.reset();
+            if (bandaIdInput) bandaIdInput.value = '';
+            if (saveBtn) saveBtn.textContent = 'Guardar material'; // 🔥 Agrega esta línea 🔥
+            if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+
+            // También limpiar los campos individualmente para mayor seguridad si el reset no funciona
+            if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = '';
+            if (document.getElementById('marca_producto')) document.getElementById('marca_producto').value = '';
+            if (document.getElementById('columna')) document.getElementById('columna').value = '';
+            if (document.getElementById('codigo_proveedor')) document.getElementById('codigo_proveedor').value = '';
+            if (document.getElementById('cantidad_prestada')) document.getElementById('cantidad_prestada').value = '';
+            if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = '';
+        }
+
+        async function showBarcodeModal(id) {
+    try {
+        const response = await fetch(`/obtener_banda/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const banda = await response.json();
+        
+        // Populate modal with product info
+        barcodeNombre.textContent = banda[1];
+        barcodeColumna.textContent = banda[3];
+        barcodeCodigo.textContent = banda[4];
+        barcodeCantidad.textContent = banda[6];
+
+        // Generate barcode using JsBarcode
+        const barcodeValue = `${banda[4]}`; // Use the provider code as the barcode value
+        JsBarcode(barcodeCanvas, barcodeValue, {
+            format: "CODE128",
+            displayValue: true,
+            fontSize: 20,
+            height: 80,
+            margin: 10
+        });
+
+        // Update the download link with the canvas image
+        downloadBarcodeBtn.href = barcodeCanvas.toDataURL("image/png");
+        downloadBarcodeBtn.download = `codigo_barras_${banda[4]}.png`;
+
+        // Display the modal
+        barcodeModal.style.display = 'flex';
+        void barcodeModal.offsetWidth;
+        barcodeModal.classList.add('show');
+
+    } catch (error) {
+        console.error('Error fetching data or generating barcode:', error);
+        showMessage('Error al generar el código de barras.', 'error');
+    }
+}
+    </script>
+</body>
+</html>

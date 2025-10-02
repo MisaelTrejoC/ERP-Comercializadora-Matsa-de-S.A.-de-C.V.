@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Matsa - Orden de material</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+     <style>
+        /* --- General Body and Container Styles --- */
+      
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        /* --- Form Styles --- */
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 100%; /* Ensure inputs take full width of their grid cell */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        /* --- Buttons --- */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+            transform: translateY(-2px);
+        }
+
+        /* --- Search Bar --- */
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .search-container input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            min-width: 200px;
+        }
+        .search-container button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .search-container button:hover {
+            background-color: #0056b3;
+        }
+        
+        /* --- Live Calculation Displays --- */
+        .calculation-display {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f0f8ff;
+            border: 1px solid #e6f2ff;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+        .calculation-display strong {
+            color: #0056b3;
+        }
+
+        
+        </style>
+</head>
+<body>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacenamiento</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gambeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    <a href="/lista_numeros_de_parte_y_piezas_por_barra">Numeros de parte</a>
+                    <a href="/papeleria">Papeleria</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Piezas y Empaquetado</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/compras">Compras</a>
+                </div>
+                <div></div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/ventas">Ventas</a>
+                </div>
+                <div></div>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <h2>Orden de Material - Almacenamiento</h2>
+        
+        <section class="form-section">
+            <div>
+                <label for="fuente_material">Fuente del Material</label>
+                <select id="fuente_material" onchange="cargarTiposMaterialPorFuente(this.value)">
+                    <option value="">-- Selecciona Fuente --</option>
+                   <!-- <option value="locker">Locker</option> -->
+                    <!-- <option value="gambeta">Gambeta</option> -->
+                    <option value="partes_piezas">Números de Parte</option>
+                </select>
+            </div>
+            {# SECCIÓN PARA NÚMEROS DE PARTE INTERNO Y MATERIA PRIMA #}
+            <div id="partesPiezasFields" class="hidden">
+                <label for="noParteInternoSelect">No. de parte interno:</label>
+                <select id="noParteInternoSelect" onchange="seleccionarNoParteInterno()">
+                    <option value="">-- Selecciona No. de Parte Interno --</option>
+                </select>
+
+                <label for="materiaPrimaInput">Materia prima:</label>
+                <input type="text" id="materiaPrimaInput" readonly>
+
+                <div>
+                    <label for="diametroMaterialInput">Diámetro del material (mm):</label>
+                    <input type="text" id="diametroMaterialInput" readonly>
+                </div>
+                {# CAMPO PARA MOSTRAR LA MEDIDA EN PULGADAS #}
+                <div>
+                    <label for="diametroMaterialPulgadasInput">Diámetro (pulgadas):</label>
+                    <input type="text" id="diametroMaterialPulgadasInput" readonly>
+                </div>
+                {# CAMBIO DE ETIQUETA: "Horas x Pieza" a "Pieza x Hora" #}
+                <div>
+                    <label for="horasXPiezaInput">Pieza x Hora:</label>
+                    <input type="text" id="horasXPiezaInput" readonly>
+                </div>
+            </div>
+
+            {# EL CAMPO DE MATERIAL ORIGINAL (PARA LOCKER/GAMBETA) #}
+            <div id="materialOriginalFields">
+                <label for="material">Tipo de Material:</label>
+                <select id="material">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+            <div>
+                <label for="tipoMateriaPrima">Tipo de materia prima:</label>
+                <select id="tipoMateriaPrima" onchange="actualizarDensidad()">
+                    <option value="">-- Selecciona --</option>
+                    <option value="LATON">LATON</option>
+                    <option value="ACE INOX303">ACE INOX303</option>
+                    <option value="ACETAL">ACETAL</option>
+                    <option value="ALUMINIO">ALUMINIO</option>
+                </select>
+            </div>
+            <div>
+                <label for="densidadInput">Densidad:</label>
+                <input type="number" id="densidadInput" readonly>
+            </div>
+            <div>
+                <label>Proveedor (opcional)</label>
+                <input type="text" id="proveedor">
+            </div>
+            <div>
+                <label>Longitud de la barra (mm)</label>
+                <input type="number" id="longitudBarra" oninput="actualizarDatos()">
+            </div>
+            <div>
+                <label>Peso de la barra (kg)</label>
+                <input type="text" id="pesoBarra" readonly>
+            </div>
+            <div>
+                <label>Longitud de la pieza (mm)</label>
+                <input type="number" id="longitudPieza" oninput="actualizarDatos()">
+            </div>
+            <div>
+                <label>Cantidad de piezas de latón</label>
+                <input type="number" id="cantidadLaton">
+            </div>
+            <div>
+                <label>Número de parte del cliente</label>
+                <input type="text" id="numeroParte">
+            </div>
+        </section>
+        <div class="output">
+            <p>Longitud con corte + 2% scrap: <span id="longitudConScrap">0</span> mm</p>
+            <p><strong>Longitud de la pieza (mm) * 25.4:</strong> <span id="longitudPiezaConvertidaDisplay">0</span> mm</p>
+            <p><strong>Longitud Total:</strong> <span id="longitudTotal">0</span> mm</p>
+            <p><strong>Piezas por barra: <span id="piezasPorBarra">0</span></strong></p>
+            <p>Cantidad en kilogramos:<span id="cantidadKilogramos"> 0.00</span> kg</p>
+            <p><strong>Cantidad de Orden: <span id="cantidadDeOrdenDisplay">0</span></strong></p>
+            <p><strong>Volumen (kg): <span id="volumenKgDisplay">0.00</span> kg</strong></p>
+        </div>
+        <div class="form-buttons">
+            <button onclick="guardarMaterial()">Guardar Material</button>
+            <button onclick="limpiarFormulario()">Limpiar Formulario</button>
+            <button onclick="prepararEImprimirFormato()">Imprimir Formato Actual</button> {# Renombrado para claridad #}
+        </div>
+        <section class="form-section">
+            <h3>Buscar Material o Número de Parte</h3>
+            <input type="text" id="busqueda" oninput="buscarMaterial()" placeholder="Buscar por material, número de parte, ID...">
+        </section>
+
+        <section class="form-section">
+            <h3>Simular Escaneo de Código de Barras</h3>
+            <input type="text" id="barcodeScannerInput" placeholder="Escanea el ID del material aquí" onkeyup="if(event.keyCode === 13) simularEscaneo()">
+            <small>Presiona Enter después de ingresar el ID del material.</small>
+            <div class="form-buttons">
+                <button onclick="cargarDatosTabla()">Mostrar Todos los Materiales</button>
+            </div>
+        </section>
+
+        <h3>Datos Guardados</h3>
+        <table id="tablaDatos">
+            <thead>
+                <tr>
+                    <th>Materia Prima</th>
+                    <th>Proveedor</th>
+                    <th>Longitud Barra (mm)</th>
+                    <th>Peso Barra (kg)</th>
+                    <th>Longitud Pieza (mm)</th>
+                    <th>Cantidad Latón</th>
+                    <th>Piezas por Barra</th>
+                    <th>Cantidad (Kg)</th>
+                    <th>Horas Requeridas</th>
+                    <th>No. Parte Cliente</th>
+                    <th>No. Parte Interno</th>
+                    <th>Tipo Materia Prima</th>
+                    <th>Pieza x Hora</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTablaDatos">
+            </tbody>
+        </table>
+
+    </main>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeDeleteModalBtn">&times;</span>
+            <h2>Confirmar Eliminación</h2>
+            <p id="deleteConfirmationMessage">¿Estás seguro de que quieres eliminar este material?</p>
+            <div class="button-group">
+                <button id="confirmDeleteBtn" class="btn btn-danger">Sí, Eliminar</button>
+                <button id="cancelDeleteBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+<div id="barcodeModal" class="modal">
+        <div class="modal-content" id="barcodePrintArea">
+            <span class="close-button" id="closeBarcodeModalBtn">&times;</span>
+            <h2>Código de Barras Material</h2>
+            <p>ID Material: <strong id="barcodeMaterialIdDisplay"></strong></p>
+            <p>Tipo Material: <strong id="barcodeMaterialTypeDisplay"></strong></p>
+            <p>Dimensión: <strong id="barcodeMaterialDimensionDisplay"></strong></p>
+            <p>Longitud Pieza: <strong id="barcodePieceLengthDisplay"></strong></p>
+            <p>Proveedor: <strong id="barcodeSupplierDisplay"></strong></p>
+            <p>No. Parte Cliente: <strong id="barcodePartNumberDisplay"></strong></p>
+            <svg id="barcodeSvg"></svg>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" id="printBarcodeBtn">Imprimir Código</button>
+                <button type="button" class="btn btn-secondary" onclick="closeBarcodeModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+<div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeErrorModalBtn">&times;</span>
+            <h2>Error</h2>
+            <p id="errorMessage"></p>
+            <button type="button" class="btn btn-secondary" onclick="closeErrorModal()">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirmación</h2>
+            <p id="customConfirmMessage"></p>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" id="customConfirmYesBtn">Sí</button>
+                <button type="button" class="btn btn-secondary" id="customConfirmNoBtn">No</button>
+            </div>
+        </div>
+    </div>
+
+<div id="messageBox" class="message-box"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+<script>
+    
+        let materialAEditarId = null;
+        let materialIdToDelete = null;
+        let partesPiezasData = [];
+        let allMaterialsData = []; // This will hold all material data fetched from the server
+
+        // References to delete confirmation modal elements
+        const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+        const deleteConfirmationMessage = document.getElementById("deleteConfirmationMessage");
+        const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+        const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+        const closeDeleteModalBtn = document.getElementById("closeDeleteModalBtn");
+
+        // References to general alert and error modals
+        const barcodeModal = document.getElementById("barcodeModal");
+        const errorModal = document.getElementById("errorModal");
+        const errorMessage = document.getElementById("errorMessage");
+
+        // NEW: Reference for the custom confirmation modal
+        const customConfirmModal = document.getElementById("customConfirmModal");
+        const customConfirmMessage = document.getElementById("customConfirmMessage");
+        const customConfirmYesBtn = document.getElementById("customConfirmYesBtn");
+        const customConfirmNoBtn = document.getElementById("customConfirmNoBtn");
+        let customConfirmPromiseResolve;
+
+        // Utility function for toast messages
+        function showMessage(message, type = 'info') { // 'type' can be 'success', 'error', 'info'
+            const messageBox = document.getElementById("messageBox");
+            if (messageBox) {
+                messageBox.textContent = message;
+                messageBox.className = `message-box ${type}`; // Apply base class and type class
+
+                // Add the 'show' class to trigger visibility and opacity transition
+                messageBox.classList.add("show");
+                messageBox.style.display = "block"; // Ensure it becomes visible
+
+                // Hide the message after 3 seconds, removing the 'show' class
+                setTimeout(() => {
+                    messageBox.classList.remove("show");
+                    // After the transition, hide it completely to not interfere with layout
+                    setTimeout(() => {
+                        messageBox.style.display = "none";
+                    }, 300); // Wait for opacity transition to finish (0.3s)
+                }, 3000); // Message visible for 3 seconds
+            } else {
+                console.warn("Elemento #messageBox no encontrado. El mensaje no se mostrará como toast.");
+                alert(message); // Fallback: If no messageBox, at least use an alert for debugging.
+            }
+        }
+
+        // Custom Alert (uses showMessage as a toast)
+        function showCustomAlert(message, type = 'info') {
+            showMessage(message, type);
+        }
+
+        // Custom Confirmation Modal
+        function showCustomConfirm(message) {
+            return new Promise((resolve) => {
+                customConfirmMessage.textContent = message;
+                // Add 'show' class to trigger modal display and animations
+                customConfirmModal.classList.add('show');
+                customConfirmPromiseResolve = resolve;
+            });
+        }
+
+        function closeCustomConfirmModal() {
+            // Remove 'show' class to trigger modal close animation
+            customConfirmModal.classList.remove('show');
+            // Allow time for animation before hiding completely
+            setTimeout(() => {
+                customConfirmModal.style.display = 'none';
+            }, 300); // Match CSS transition duration
+            // No need to resolve here, as resolve is called by yes/no buttons
+        }
+
+        // General modal open/close (less used, prefer specific functions below)
+        function openModal(modalElement) {
+            if (modalElement) {
+                modalElement.style.display = 'flex'; // Hazlo visible con flexbox para centrado
+                // Forzar un "reflow" para que la transición CSS se aplique correctamente
+                void modalElement.offsetWidth;
+                modalElement.classList.add('show'); // Añade la clase 'show' para iniciar la animación de entrada
+                // console.log("Abriendo modal, añadiendo 'show'.", modalElement); // Depuración
+            }
+        }
+
+        function closeModal(modalElement) {
+    if (modalElement) {
+        // CORRECCIÓN CLAVE: Elimina la línea display = 'none' ANTES de remover la clase 'show'.
+        // Queremos que la transición de ocultado ocurra primero.
+        modalElement.classList.remove('show'); // Remueve la clase 'show' para iniciar la animación de salida
+
+        // Ahora, después de que la animación termine, oculta el elemento completamente.
+        setTimeout(() => {
+            modalElement.style.display = 'none'; // Oculta el elemento después de la animación
+        }, 300); // Asegúrate de que este tiempo coincida con la duración de tu CSS transition
+    }
+}
+
+        // Specific modal functions (for consistency)
+        function openErrorModal(message) {
+            errorMessage.textContent = message;
+            openModal(errorModal);
+        }
+
+        function closeErrorModal() {
+            closeModal(errorModal);
+        }
+
+        function openBarcodeModal() {
+            openModal(barcodeModal);
+        }
+
+        function closeBarcodeModal() {
+            closeModal(barcodeModal);
+        }
+
+        function openPrintModal() { // For the print format modal
+            openModal(document.getElementById("printFormatModal")); // Assuming this modal exists in HTML
+        }
+
+        function closePrintModal() {
+            closeModal(document.getElementById("printFormatModal")); // Assuming this modal exists in HTML
+        }
+
+        function openDeleteConfirmModal(id) {
+            materialIdToDelete = id; // Stores material ID
+            if (deleteConfirmationMessage) {
+                deleteConfirmationMessage.textContent = `¿Estás seguro de que quieres eliminar el material con ID ${id}?`; // Update the message
+            }
+            openModal(deleteConfirmModal); // Open the modal
+        }
+
+        function closeDeleteConfirmModal() {
+    materialIdToDelete = null; // Limpia el ID cuando el modal se cierra
+    // Asegúrate de que 'deleteConfirmModal' sea una variable que ya haya sido obtenida del DOM.
+    // Si la declaraste al inicio de DOMContentLoaded, aquí estará bien.
+    closeModal(deleteConfirmModal);
+}
+
+        // Function to convert fraction to MM (already existing)
+        function convertFractionToMM(numerator, denominator) {
+            if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+                const inches = numerator / denominator;
+                return (inches * 25.4).toFixed(2);
+            }
+            return null;
+        }
+
+        // Function: Parses material string and returns both MM value and inches representation
+        function parseMaterialDiameterAndInches(materialString) {
+            if (!materialString) return { mm: '', inches: '' };
+
+            const lowerCaseString = materialString.trim().toLowerCase();
+            let mmValue = '';
+            let inchesValue = '';
+
+            // Try to match fractions like "1/2"
+            const fractionMatch = lowerCaseString.match(/(\d+)\s*\/\s*(\d+)/);
+            if (fractionMatch) {
+                const numerator = parseFloat(fractionMatch[1]);
+                const denominator = parseFloat(fractionMatch[2]);
+                const converted = convertFractionToMM(numerator, denominator);
+                if (converted !== null) {
+                    mmValue = converted;
+                    inchesValue = `${fractionMatch[1]}/${fractionMatch[2]}`; // Store original fraction
+                }
+            } else {
+                // Try to match "XXmm"
+                const mmMatch = lowerCaseString.match(/(\d+(\.\d+)?)\s*mm/);
+                if (mmMatch) {
+                    const value = parseFloat(mmMatch[1]);
+                    mmValue = !isNaN(value) ? value.toFixed(2) : '';
+                    inchesValue = (value / 25.4).toFixed(3); // Convert MM to inches for display
+                } else {
+                    // Try to match just a number (assume inches if no unit)
+                    const numberMatch = lowerCaseString.match(/(\d+(\.\d+)?)/);
+                    if (numberMatch) {
+                        const value = parseFloat(numberMatch[1]);
+                        if (!isNaN(value)) {
+                            mmValue = (value * 25.4).toFixed(2);
+                            inchesValue = value.toFixed(2); // If it's a decimal, treat it as inches
+                        }
+                    }
+                }
+            }
+            return { mm: mmValue, inches: inchesValue };
+        }
+
+        function actualizarDatos() {
+            const longitudPiezaOriginal = parseFloat(document.getElementById("longitudPieza").value) || 0;
+            const longitudBarraInput = parseFloat(document.getElementById("longitudBarra").value) || 0;
+            const cantidadLaton = parseInt(document.getElementById("cantidadLaton").value) || 0;
+            const densidad = parseFloat(document.getElementById("densidadInput").value) || 0;
+            const diametroMaterial = parseFloat(document.getElementById("diametroMaterialInput").value) || 0; // Use diameter in MM
+
+            // 1. Conversion of Piece Length to MM
+            const longitudPiezaConvertida = longitudPiezaOriginal * 25.4; // Assuming "longitudPiezaOriginal" is in inches
+
+            // The bar length is already assumed to be in MM from the input.
+            const longitudBarraEnMM = longitudBarraInput;
+
+            // 2. Calculation of Length with Scrap per piece
+            const longitudConScrap = (longitudPiezaConvertida + 2) * 1.02;
+
+            // 3. Calculation of Pieces per Bar
+            const piezas = longitudConScrap > 0 ? Math.floor(longitudBarraEnMM / longitudConScrap) : 0;
+
+            // 4. Calculation of Volume and Weight using diameter in MM
+            // Volume of cylinder = PI * (radius)^2 * height
+            // radius = diametroMaterial / 2
+            // height = longitudBarraEnMM
+            const volumen_mm3_barra = (Math.PI * (diametroMaterial / 2) * (diametroMaterial / 2)) * longitudBarraEnMM;
+
+            // Convert volume from mm³ to m³ (divide by 1,000,000,000 or 10^9)
+            // Weight = Volume (m³) * Density (kg/m³)
+            // Ensure density is in kg/m³
+            const pesoCalculadoBarra = (volumen_mm3_barra * densidad) / 1_000_000_000;
+
+            // 5. Update Bar Weight Field (input)
+            document.getElementById("pesoBarra").value = pesoCalculadoBarra.toFixed(2);
+
+            // 6. Calculation of Total Quantity in Kilograms (current inventory)
+            const cantidadKilogramos = (cantidadLaton * pesoCalculadoBarra);
+
+            // 7. Calculation of Order Quantity (total pieces that can be made)
+            const cantidadDeOrden = cantidadLaton * piezas;
+
+            // --- Update Display Elements ---
+            document.getElementById("longitudConScrap").textContent = longitudConScrap.toFixed(2);
+            document.getElementById("longitudPiezaConvertidaDisplay").textContent = longitudPiezaConvertida.toFixed(2);
+
+            document.getElementById("piezasPorBarra").textContent = piezas;
+            document.getElementById("cantidadKilogramos").textContent = cantidadKilogramos.toFixed(2);
+
+            // Display volume in m³
+            const volumen_m3_barra = (volumen_mm3_barra / 1_000_000_000).toFixed(6) + ' m³'; // Convert to m³ for display
+            document.getElementById("volumenKgDisplay").textContent = volumen_m3_barra;
+
+            document.getElementById("cantidadDeOrdenDisplay").textContent = cantidadDeOrden;
+        }
+
+        // Function to update density based on raw material type
+        function actualizarDensidad() {
+            const tipoMateriaPrima = document.getElementById("tipoMateriaPrima").value.toUpperCase(); // Convert to uppercase
+            let densidad = 0;
+
+            // Use includes() for more flexible matching and integer values (kg/m³)
+            if (tipoMateriaPrima.includes("LATON")) {
+                densidad = 8600; // Value in kg/m³
+            } else if (tipoMateriaPrima.includes("ACE INOX303")) {
+                densidad = 7850; // Value in kg/m³
+            } else if (tipoMateriaPrima.includes("ACETAL")) {
+                densidad = 1410; // Value in kg/m³
+            } else if (tipoMateriaPrima.includes("ALUMINIO")) {
+                densidad = 2700; // Value in kg/m³
+            }
+            // Add more conditions as needed for other materials
+
+            console.log(`[actualizarDensidad] Tipo de materia prima seleccionado: ${tipoMateriaPrima}, Densidad calculada: ${densidad} kg/m³`);
+            document.getElementById("densidadInput").value = densidad;
+            actualizarDatos(); // Recalculate other fields that depend on density
+        }
+
+        async function guardarMaterial() {
+            const fuenteMaterial = document.getElementById("fuente_material").value;
+            let materialValue;
+            let noParteInterno = '';
+            let materiaPrima = ''; // Variable to hold the raw material string for parsing
+            let diametroMaterial = 0; // Initialize as number
+            let diametroMaterialPulgadas = '';
+            let horasXPiezaFromPart = 0;
+
+            if (fuenteMaterial === 'partes_piezas') {
+                const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+                noParteInterno = noParteInternoSelect.value;
+                materialValue = noParteInterno;
+
+                const parteEncontrada = partesPiezasData.find(item => item[1] === noParteInterno);
+                if (parteEncontrada) {
+                    materiaPrima = parteEncontrada[5] || '';
+                    const parsedDiameter = parseMaterialDiameterAndInches(materiaPrima);
+                    diametroMaterial = parseFloat(parsedDiameter.mm) || 0; // Ensure it's a number
+                    diametroMaterialPulgadas = parsedDiameter.inches;
+                    horasXPiezaFromPart = parteEncontrada[8] !== null ? parseFloat(parteEncontrada[8]) : 0;
+                }
+
+            } else {
+                const materialSelect = document.getElementById("material");
+                const selectedOption = materialSelect.options[materialSelect.selectedIndex];
+                materialValue = selectedOption ? selectedOption.value : '';
+                diametroMaterial = parseFloat(document.getElementById("diametroMaterialInput").value) || 0; // Ensure it's a number
+                diametroMaterialPulgadas = document.getElementById("diametroMaterialPulgadasInput") ? document.getElementById("diametroMaterialPulgadasInput").value : '';
+            }
+
+            const data = {
+                material: materialValue,
+                proveedor: document.getElementById("proveedor").value,
+                longitud_barra: parseFloat(document.getElementById("longitudBarra").value) || 0,
+                peso_barra: parseFloat(document.getElementById("pesoBarra").value) || 0,
+                longitud_pieza: parseFloat(document.getElementById("longitudPieza").value) || 0,
+                cantidad_laton: parseInt(document.getElementById("cantidadLaton").value) || 0,
+                piezas_por_barra: parseInt(document.getElementById("piezasPorBarra").textContent) || 0,
+                numero_parte: document.getElementById("numeroParte").value,
+                cantidad_kilogramos: parseFloat(document.getElementById("cantidadKilogramos").textContent) || 0,
+                densidad: parseFloat(document.getElementById("densidadInput").value) || 0,
+                tipo_materia_prima: document.getElementById("tipoMateriaPrima").value,
+                diametro_material: diametroMaterial,
+                diametro_material_pulgadas: diametroMaterialPulgadas,
+                volumen_kg: parseFloat(document.getElementById("volumenKgDisplay").textContent) || 0,
+                horas_x_pieza: fuenteMaterial === 'partes_piezas' ? horasXPiezaFromPart : (parseFloat(document.getElementById("horasXPiezaInput")?.value) || 0),
+                cantidad_de_orden: parseInt(document.getElementById("cantidadDeOrdenDisplay").textContent) || 0,
+                no_parte_interno: noParteInterno,
+            };
+
+            console.log("Datos a guardar:", data);
+
+            try {
+                const response = await fetch('/guardar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const responseData = await response.json(); // This should ideally contain the new ID
+                showCustomAlert("Material guardado correctamente.", 'success');
+
+                // REMOVED: The custom confirm modal for printing
+                // const confirmPrint = await showCustomConfirm("¿Deseas imprimir el formato del material?");
+                // if (confirmPrint) {
+                //     prepararEImprimirFormato(responseData.id || data);
+                // }
+                limpiarFormulario();
+                cargarDatosTabla(); // Reload table to show changes
+            } catch (error) {
+                console.error("Error al guardar material:", error);
+                showCustomAlert("Error al guardar material: " + error.message, 'error');
+            }
+        }
+
+        function limpiarFormulario() {
+            document.getElementById("fuente_material").value = "";
+            document.getElementById("material").innerHTML = '<option value="">-- Selecciona --</option>';
+            document.getElementById("noParteInternoSelect").innerHTML = '<option value="">-- Selecciona No. de Parte Interno --</option>';
+            document.getElementById("materiaPrimaInput").value = "";
+            document.getElementById("diametroMaterialInput").value = "";
+            document.getElementById("diametroMaterialPulgadasInput").value = "";
+            const horasXPiezaInput = document.getElementById("horasXPiezaInput");
+            if (horasXPiezaInput) horasXPiezaInput.value = "";
+
+            document.getElementById("tipoMateriaPrima").value = "";
+            document.getElementById("densidadInput").value = "";
+
+            document.getElementById("proveedor").value = "";
+            document.getElementById("longitudBarra").value = "";
+            document.getElementById("pesoBarra").value = "0.00";
+            document.getElementById("longitudPieza").value = "";
+            document.getElementById("cantidadLaton").value = "";
+            document.getElementById("numeroParte").value = "";
+            document.getElementById("longitudConScrap").textContent = "0.00";
+            document.getElementById("longitudPiezaConvertidaDisplay").textContent = "0.00";
+            document.getElementById("piezasPorBarra").textContent = "0";
+            document.getElementById("cantidadKilogramos").textContent = "0.00";
+            document.getElementById("volumenKgDisplay").textContent = "0.00 m³"; // Reset with unit
+            document.getElementById("cantidadDeOrdenDisplay").textContent = "0";
+
+            document.getElementById("partesPiezasFields").classList.add("hidden");
+            document.getElementById("materialOriginalFields").classList.remove("hidden"); // Default to original fields
+
+            const guardarBtn = document.getElementById("guardarMaterialBtn");
+            if (guardarBtn) {
+                guardarBtn.textContent = "Guardar Material";
+                guardarBtn.onclick = guardarMaterial; // Reset to original save function
+            }
+        }
+
+        function renderizarFilaTabla(item, cuerpoTabla) {
+            const fila = cuerpoTabla.insertRow();
+            fila.dataset.id = item[0]; // Stores material ID
+
+            fila.insertCell().textContent = item[1] || ''; // Materia Prima (display_material)
+            fila.insertCell().textContent = item[2] || ''; // Proveedor
+            fila.insertCell().textContent = item[3] ? parseFloat(item[3]).toFixed(2) : '0.00'; // Longitud Barra (mm)
+            fila.insertCell().textContent = item[4] ? parseFloat(item[4]).toFixed(2) : '0.00'; // Peso Barra (kg)
+            fila.insertCell().textContent = item[5] ? parseFloat(item[5]).toFixed(2) : '0.00'; // Longitud Pieza (in)
+            fila.insertCell().textContent = item[6] || ''; // Cantidad Latón (bars)
+            fila.insertCell().textContent = item[7] || ''; // Piezas por Barra
+            fila.insertCell().textContent = item[8] ? parseFloat(item[8]).toFixed(2) : '0.00'; // Cantidad (Kg)
+
+            const cantidadDeOrden = (parseInt(item[6]) || 0) * (parseInt(item[7]) || 0); // Cantidad Latón * Piezas por Barra
+            const piezaXHora = item[15] !== null && item[15] !== undefined ? parseFloat(item[15]) : null; // Pieza x Hora (index 15)
+
+            let horasRequeridas = 'N/A'; // Default value in case of division by zero or invalid data
+            if (!isNaN(cantidadDeOrden) && cantidadDeOrden > 0 && piezaXHora !== null && piezaXHora > 0) {
+                const calculatedHours = cantidadDeOrden / piezaXHora;
+                horasRequeridas = Math.round(calculatedHours); // Round to nearest integer
+            }
+            fila.insertCell().textContent = horasRequeridas; // Horas Requeridas
+
+            fila.insertCell().textContent = item[9] || ''; // No. Parte Cliente
+            fila.insertCell().textContent = item[10] || ''; // No. Parte Interno
+            fila.insertCell().textContent = item[11] || ''; // Tipo Materia Prima (index 11) - Corrected from 12
+            fila.insertCell().textContent = piezaXHora !== null ? piezaXHora : ''; // Pieza x Hora (index 15)
+
+            const accionesCell = fila.insertCell();
+            const botonEditar = document.createElement("button");
+            botonEditar.textContent = "Editar";
+            botonEditar.classList.add("accion-btn", "edit");
+            botonEditar.onclick = () => editarMaterial(item[0]);
+            accionesCell.appendChild(botonEditar);
+
+            const botonBorrar = document.createElement("button");
+            botonBorrar.textContent = "Borrar";
+            botonBorrar.classList.add("accion-btn", "delete");
+            botonBorrar.onclick = () => openDeleteConfirmModal(item[0]);
+            accionesCell.appendChild(botonBorrar);
+
+            const botonCodigoBarras = document.createElement("button");
+            botonCodigoBarras.textContent = "Código Barras";
+            botonCodigoBarras.classList.add("accion-btn", "code");
+            botonCodigoBarras.onclick = () => generarCodigoBarras(item[0]);
+            accionesCell.appendChild(botonCodigoBarras);
+
+            const botonImprimir = document.createElement("button");
+            botonImprimir.textContent = "Imprimir";
+            botonImprimir.classList.add("accion-btn", "imprimir");
+            botonImprimir.onclick = () => prepararEImprimirFormato(item[0]);
+            accionesCell.appendChild(botonImprimir);
+        }
+
+        async function cargarDatosTabla() {
+            if (window.location.protocol === 'file:') {
+                openErrorModal("Parece que estás abriendo el archivo HTML directamente. Para que la aplicación funcione correctamente, necesitas ejecutar el servidor Flask.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/obtener_materiales');
+                allMaterialsData = await response.json();
+                displayFilteredMaterials(allMaterialsData);
+            } catch (error) {
+                console.error('Error al cargar datos:', error);
+                openErrorModal("No se pudieron cargar los datos del inventario. Asegúrate de que el servidor Flask esté funcionando correctamente.");
+            }
+        }
+
+        function displayFilteredMaterials(materialsToDisplay) {
+            const cuerpoTabla = document.getElementById("cuerpoTablaDatos");
+            cuerpoTabla.innerHTML = "";
+            if (materialsToDisplay.length === 0) {
+                const fila = cuerpoTabla.insertRow();
+                const celda = fila.insertCell();
+                celda.colSpan = 14;
+                celda.textContent = "No se encontraron materiales que coincidan con la búsqueda.";
+            } else {
+                materialsToDisplay.forEach(item => {
+                    renderizarFilaTabla(item, cuerpoTabla);
+                });
+            }
+        }
+
+        async function editarMaterial(id) {
+            materialAEditarId = id;
+            try {
+                const response = await fetch(`/obtener/${id}`);
+                const data = await response.json(); // data is an array (Flask tuple)
+
+                limpiarFormulario(); // Clean form first
+                document.getElementById("materialOriginalFields").classList.add("hidden");
+                document.getElementById("partesPiezasFields").classList.add("hidden");
+
+                // Populate form fields
+                document.getElementById("proveedor").value = data[2] || '';
+                document.getElementById("longitudBarra").value = data[3];
+                document.getElementById("pesoBarra").value = parseFloat(data[4]).toFixed(2);
+                document.getElementById("longitudPieza").value = data[5];
+                document.getElementById("cantidadLaton").value = data[6];
+                document.getElementById("piezasPorBarra").textContent = data[7];
+                document.getElementById("cantidadKilogramos").textContent = parseFloat(data[8]).toFixed(2);
+                document.getElementById("volumenKgDisplay").textContent = (parseFloat(data[13]) || 0).toFixed(6) + ' m³'; // Volume kg is at index 13, add unit
+
+                document.getElementById("numeroParte").value = data[9] || ''; // no_parte_cliente
+
+                // Set raw material type and then update density
+                const rawMaterialFromDB = data[11] ? String(data[11]).toUpperCase() : ''; // Ensure it's a string
+                let matchedTypeForEdit = '';
+                if (rawMaterialFromDB.includes('LATON')) {
+                    matchedTypeForEdit = 'LATON';
+                } else if (rawMaterialFromDB.includes('ACE INOX303')) {
+                    matchedTypeForEdit = 'ACE INOX303';
+                } else if (rawMaterialFromDB.includes('ACETAL')) {
+                    matchedTypeForEdit = 'ACETAL';
+                } else if (rawMaterialFromDB.includes('ALUMINIO')) {
+                    matchedTypeForEdit = 'ALUMINIO';
+                }
+                document.getElementById("tipoMateriaPrima").value = matchedTypeForEdit;
+                console.log(`[editarMaterial] Tipo de materia prima desde DB: '${data[11]}', Intentando establecer: '${matchedTypeForEdit}'`);
+                actualizarDensidad(); // Call this function so density is displayed
+
+                document.getElementById("diametroMaterialInput").value = data[12] || ''; // Material diameter is at index 12 (MM)
+                document.getElementById("horasXPiezaInput").value = data[14] !== null ? parseFloat(data[14]) : ''; // Piece per hour is at index 14
+
+                const materialEnDB = data[1]; // no_parte_interno or original material name
+
+                const partesPiezasResponse = await fetch('/obtener_partes_piezas');
+                partesPiezasData = await partesPiezasResponse.json();
+
+                const esPartePieza = partesPiezasData.find(pp => pp[1] === materialEnDB); // Check by no_parte_interno
+
+                if (esPartePieza) {
+                    document.getElementById("fuente_material").value = "partes_piezas";
+                    document.getElementById("partesPiezasFields").classList.remove("hidden");
+                    document.getElementById("materialOriginalFields").classList.add("hidden"); // Hide original fields
+
+                    const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+                    noParteInternoSelect.innerHTML = '<option value="">-- Selecciona No. de Parte Interno --</option>';
+                    partesPiezasData.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item[1];
+                        option.textContent = item[1];
+                        noParteInternoSelect.appendChild(option);
+                    });
+                    noParteInternoSelect.value = esPartePieza[1]; // Set selected value
+
+                    document.getElementById("materiaPrimaInput").value = esPartePieza[5] || '';
+                    document.getElementById("numeroParte").value = esPartePieza[2] || ''; // Use client part number from partes_piezas
+
+                    // When editing a part, parse the raw material to get inches
+                    const parsedDiameter = parseMaterialDiameterAndInches(esPartePieza[5]);
+                    document.getElementById("diametroMaterialInput").value = parsedDiameter.mm; // Ensure MM is correct
+                    document.getElementById("diametroMaterialPulgadasInput").value = parsedDiameter.inches; // Populate inches
+
+                    document.getElementById("horasXPiezaInput").value = esPartePieza[8] !== null ? parseFloat(esPartePieza[8]) : '';
+
+                } else {
+                    document.getElementById("fuente_material").value = ""; // Clear source if not a part
+                    document.getElementById("materialOriginalFields").classList.remove("hidden"); // Show original fields
+                    document.getElementById("partesPiezasFields").classList.add("hidden"); // Hide part fields
+
+                    const materialSelect = document.getElementById("material");
+                    materialSelect.innerHTML = '<option value="">-- Selecciona --</option>';
+                    const option = document.createElement('option');
+                    option.value = materialEnDB;
+                    option.textContent = materialEnDB;
+                    materialSelect.appendChild(option);
+                    materialSelect.value = materialEnDB;
+                    document.getElementById("diametroMaterialPulgadasInput").value = ''; // Clear if not a part
+                }
+
+                const guardarBtn = document.getElementById("guardarMaterialBtn");
+                if (guardarBtn) {
+                    guardarBtn.textContent = "Actualizar Material";
+                    guardarBtn.onclick = actualizarMaterial; // Change function to update
+                }
+                actualizarDatos(); // Recalculate displays based on loaded data
+            } catch (error) {
+                console.error('Error al obtener material para editar:', error);
+                openErrorModal('Error al obtener material para editar.');
+            }
+        }
+
+        async function eliminarMaterial(id) {
+    try {
+        const response = await fetch(`/eliminar/${id}`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (response.ok) {
+            showMessage(result.message || 'Material de estantería eliminado correctamente.', 'success');
+            cargarDatosTabla(); // Recarga la tabla para mostrar los cambios
+            closeDeleteConfirmModal(); // Asegúrate de que el modal de confirmación se cierre después de una eliminación exitosa
+        } else {
+            showMessage(result.message || 'Error al eliminar el material de estantería.', 'error');
+        }
+    } catch (error) {
+        console.error('Error al eliminar el material de estantería:', error);
+        showMessage('Error de conexión al intentar eliminar el material de estantería.', 'error');
+    }
+}
+        async function actualizarMaterial() {
+            if (!materialAEditarId) {
+                console.error("No se ha seleccionado ningún material para actualizar.");
+                showCustomAlert("No se ha seleccionado ningún material para actualizar.", 'error');
+                return;
+            }
+
+            const fuenteMaterial = document.getElementById("fuente_material").value;
+            let materialValue;
+            let noParteInterno = '';
+            let diametroMaterial = 0;
+            let diametroMaterialPulgadas = '';
+            let horasXPiezaFromPart = 0;
+
+            if (fuenteMaterial === 'partes_piezas') {
+                const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+                noParteInterno = noParteInternoSelect.value;
+                materialValue = noParteInterno;
+
+                const parteEncontrada = partesPiezasData.find(item => item[1] === noParteInterno);
+                if (parteEncontrada) {
+                    const parsedDiameter = parseMaterialDiameterAndInches(parteEncontrada[5]);
+                    diametroMaterial = parseFloat(parsedDiameter.mm) || 0;
+                    diametroMaterialPulgadas = parsedDiameter.inches;
+                    horasXPiezaFromPart = parteEncontrada[8] !== null ? parseFloat(parteEncontrada[8]) : 0;
+                }
+            } else {
+                const materialSelect = document.getElementById("material");
+                const selectedOption = materialSelect.options[materialSelect.selectedIndex];
+                materialValue = selectedOption ? selectedOption.value : '';
+                diametroMaterial = parseFloat(document.getElementById("diametroMaterialInput").value) || 0;
+                diametroMaterialPulgadas = document.getElementById("diametroMaterialPulgadasInput") ? document.getElementById("diametroMaterialPulgadasInput").value : '';
+            }
+
+            const data = {
+                material: materialValue,
+                proveedor: document.getElementById("proveedor").value,
+                longitud_barra: parseFloat(document.getElementById("longitudBarra").value) || 0,
+                peso_barra: parseFloat(document.getElementById("pesoBarra").value) || 0,
+                longitud_pieza: parseFloat(document.getElementById("longitudPieza").value) || 0,
+                cantidad_laton: parseInt(document.getElementById("cantidadLaton").value) || 0,
+                piezas_por_barra: parseInt(document.getElementById("piezasPorBarra").textContent) || 0,
+                numero_parte: document.getElementById("numeroParte").value,
+                cantidad_kilogramos: parseFloat(document.getElementById("cantidadKilogramos").textContent) || 0,
+                densidad: parseFloat(document.getElementById("densidadInput").value) || 0,
+                tipo_materia_prima: document.getElementById("tipoMateriaPrima").value,
+                diametro_material: diametroMaterial,
+                diametro_material_pulgadas: diametroMaterialPulgadas,
+                volumen_kg: parseFloat(document.getElementById("volumenKgDisplay").textContent) || 0,
+                horas_x_pieza: fuenteMaterial === 'partes_piezas' ? horasXPiezaFromPart : (parseFloat(document.getElementById("horasXPiezaInput")?.value) || 0),
+                cantidad_de_orden: parseInt(document.getElementById("cantidadDeOrdenDisplay").textContent) || 0,
+                no_parte_interno: noParteInterno,
+            };
+
+            try {
+                const response = await fetch(`/actualizar/${materialAEditarId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const responseData = await response.json();
+                showCustomAlert("Material actualizado correctamente", 'success');
+                cargarDatosTabla();
+                limpiarFormulario();
+                materialAEditarId = null;
+            } catch (error) {
+                console.error('Error al actualizar material:', error);
+                showCustomAlert("Error al actualizar material: " + error.message, 'error');
+            }
+        }
+
+        function buscarMaterial() {
+            const q = document.getElementById("busqueda").value.toLowerCase();
+            const filteredMaterials = allMaterialsData.filter(item => {
+                // item[0] = id
+                // item[1] = display_material (materia_prima or original material)
+                // item[2] = proveedor
+                // item[3] = longitud_barra
+                // item[4] = peso_barra (calculated)
+                // item[5] = longitud_pieza
+                // item[6] = cantidad_laton
+                // item[7] = piezas_por_barra
+                // item[8] = cantidad_kilogramos
+                // item[9] = numero_parte (cliente)
+                // item[10] = no_parte_interno
+                // item[11] = tipo_materia_prima (from original index 12 in DB for the old structure)
+                // item[12] = diametro_material (in MM)
+                // item[13] = volumen_kg
+                // item[14] = horas_x_pieza
+
+                // Search by fields saved in the DB.
+                // Required Hours is a frontend calculated field, not saved.
+                return (item[1] && String(item[1]).toLowerCase().includes(q)) ||
+                    (item[9] && String(item[9]).toLowerCase().includes(q)) ||
+                    (item[10] && String(item[10]).toLowerCase().includes(q)) ||
+                    (item[0] && String(item[0]).toLowerCase().includes(q)) ||
+                    (item[12] && String(item[12]).toLowerCase().includes(q)) || // Search by diameter in MM
+                    (item[4] && String(item[4]).toLowerCase().includes(q)) ||
+                    (item[14] && String(item[14]).toLowerCase().includes(q)); // Search by Piece x Hour (index 14)
+            });
+            displayFilteredMaterials(filteredMaterials);
+        }
+
+        async function cargarTiposMaterialPorFuente(fuente) {
+            const materialSelect = document.getElementById("material");
+            const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+            const materiaPrimaInput = document.getElementById("materiaPrimaInput");
+            const diametroMaterialInput = document.getElementById("diametroMaterialInput");
+            const diametroMaterialPulgadasInput = document.getElementById("diametroMaterialPulgadasInput");
+            const horasXPiezaInput = document.getElementById("horasXPiezaInput");
+            const numeroParteInput = document.getElementById("numeroParte");
+
+            document.getElementById("partesPiezasFields").classList.add("hidden");
+            document.getElementById("materialOriginalFields").classList.add("hidden");
+
+            materialSelect.innerHTML = '<option value="">-- Selecciona --</option>';
+            noParteInternoSelect.innerHTML = '<option value="">-- Selecciona No. de Parte Interno --</option>';
+            materiaPrimaInput.value = "";
+            diametroMaterialInput.value = "";
+            diametroMaterialPulgadasInput.value = "";
+            horasXPiezaInput.value = "";
+            numeroParteInput.value = "";
+
+            document.getElementById("tipoMateriaPrima").value = "";
+            document.getElementById("densidadInput").value = "";
+
+            let url = '';
+            if (fuente === 'locker') {
+                url = '/obtener_registros_lockers';
+                document.getElementById("materialOriginalFields").classList.remove("hidden");
+            } else if (fuente === 'gambeta') {
+                url = '/obtener_registros_gambetas';
+                document.getElementById("materialOriginalFields").classList.remove("hidden");
+            } else if (fuente === 'partes_piezas') {
+                url = '/obtener_partes_piezas';
+                document.getElementById("partesPiezasFields").classList.remove("hidden");
+            }
+
+            if (url) {
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (fuente === 'partes_piezas') {
+                        partesPiezasData = data; // Save "Part Numbers" data
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item[1]; // no_parte_interno
+                            option.textContent = item[1];
+                            noParteInternoSelect.appendChild(option);
+                        });
+                    } else {
+                        data.forEach(registro => {
+                            const option = document.createElement('option');
+                            option.value = registro.nombre_producto;
+                            option.textContent = registro.medida_producto ? `${registro.nombre_producto} - ${registro.medida_producto}` : registro.nombre_producto;
+                            materialSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar tipos de material:', error);
+                }
+            }
+        }
+
+        function seleccionarNoParteInterno() {
+            const selectedNoParteInterno = document.getElementById("noParteInternoSelect").value;
+            const numeroParteClienteInput = document.getElementById("numeroParte");
+            const materiaPrimaInput = document.getElementById("materiaPrimaInput");
+            const diametroMaterialInput = document.getElementById("diametroMaterialInput");
+            const diametroMaterialPulgadasInput = document.getElementById("diametroMaterialPulgadasInput");
+            const horasXPiezaInput = document.getElementById("horasXPiezaInput");
+            const tipoMateriaPrimaSelect = document.getElementById("tipoMateriaPrima");
+
+            // Assuming partesPiezasData has the structure:
+            // [id, no_parte_interno, no_parte_cliente, description, client, raw_material, inches_measurement, mm_measurement, piece_per_hour, piece_per_shift_laj, pieces_per_bar]
+            const parteEncontrada = partesPiezasData.find(item => item[1] === selectedNoParteInterno);
+
+            if (parteEncontrada) {
+                numeroParteClienteInput.value = parteEncontrada[2] || '';
+                materiaPrimaInput.value = parteEncontrada[5] || '';
+
+                // Use the new function to get both values
+                const parsedDiameter = parseMaterialDiameterAndInches(parteEncontrada[5]);
+                diametroMaterialInput.value = parsedDiameter.mm;
+                diametroMaterialPulgadasInput.value = parsedDiameter.inches;
+
+                horasXPiezaInput.value = parteEncontrada[8] !== null ? parseFloat(parteEncontrada[8]) : '';
+
+                // Set raw material type and update density
+                const rawMaterialFromPart = parteEncontrada[5] ? String(parteEncontrada[5]).toUpperCase() : '';
+                let matchedType = '';
+                if (rawMaterialFromPart.includes('LATON')) {
+                    matchedType = 'LATON';
+                } else if (rawMaterialFromPart.includes('ACE INOX303')) {
+                    matchedType = 'ACE INOX303';
+                } else if (rawMaterialFromPart.includes('ACETAL')) {
+                    matchedType = 'ACETAL';
+                } else if (rawMaterialFromPart.includes('ALUMINIO')) {
+                    matchedType = 'ALUMINIO';
+                }
+                tipoMateriaPrimaSelect.value = matchedType;
+                console.log(`[seleccionarNoParteInterno] Materia prima desde parte: '${parteEncontrada[5]}', Intentando establecer tipo: '${matchedType}'`);
+                actualizarDensidad();
+            } else {
+                numeroParteClienteInput.value = '';
+                materiaPrimaInput.value = '';
+                diametroMaterialInput.value = '';
+                diametroMaterialPulgadasInput.value = '';
+                horasXPiezaInput.value = '';
+                tipoMateriaPrimaSelect.value = '';
+                actualizarDensidad();
+            }
+        }
+
+        // Function to load internal part numbers (assumed to come from the backend)
+        async function cargarNumerosParteInternos() {
+            const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+            noParteInternoSelect.innerHTML = '<option value="">-- Selecciona No. de Parte Interno --</option>';
+            try {
+                const response = await fetch('/obtener_partes_piezas');
+                if (!response.ok) throw new Error('Network response was not ok.');
+                partesPiezasData = await response.json(); // Update global variable
+                partesPiezasData.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[1]; // no_parte_interno
+                    option.textContent = item[1];
+                    noParteInternoSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error al cargar números de parte internos:", error);
+                openErrorModal("Error al cargar números de parte internos. Asegúrate de que el servidor Flask esté corriendo.");
+            }
+        }
+
+        // --- Barcode Functions ---
+        function generarCodigoBarras(materialId) {
+            const barcodeSvg = document.getElementById("barcodeSvg");
+            const barcodeMaterialIdDisplay = document.getElementById("barcodeMaterialIdDisplay");
+            const barcodeMaterialTypeDisplay = document.getElementById("barcodeMaterialTypeDisplay");
+            const barcodeMaterialDimensionDisplay = document.getElementById("barcodeMaterialDimensionDisplay");
+            const barcodePieceLengthDisplay = document.getElementById("barcodePieceLengthDisplay");
+            const barcodeSupplierDisplay = document.getElementById("barcodeSupplierDisplay");
+            const barcodePartNumberDisplay = document.getElementById("barcodePartNumberDisplay");
+
+            // Find the material data from allMaterialsData
+            // Based on renderizarFilaTabla and table headers, item[0] is ID, item[11] is Tipo Mat. Prima, item[12] is Diametro Material
+            const materialData = allMaterialsData.find(item => item[0] === materialId);
+
+            if (materialData) {
+                // Clear any previous barcode
+                barcodeSvg.innerHTML = '';
+
+                // Generate the barcode
+                JsBarcode(barcodeSvg, String(materialId), {
+                    format: "CODE128",
+                    displayValue: true,
+                    height: 80,
+                    width: 2,
+                    margin: 10,
+                    fontSize: 16
+                });
+
+                // Populate barcode modal details
+                barcodeMaterialIdDisplay.textContent = materialData[0] || 'N/A'; // ID
+                barcodeMaterialTypeDisplay.textContent = materialData[11] || 'N/A'; // Tipo Materia Prima (index 11)
+                barcodeMaterialDimensionDisplay.textContent = `${materialData[12] ? parseFloat(materialData[12]).toFixed(2) + 'mm' : 'N/A'}`; // Diametro Material (index 12)
+                barcodePieceLengthDisplay.textContent = `${materialData[5] ? parseFloat(materialData[5]).toFixed(2) + 'in' : 'N/A'}`; // Longitud Pieza (assuming inches from input) (index 5)
+                barcodeSupplierDisplay.textContent = materialData[2] || 'N/A'; // Proveedor (index 2)
+                barcodePartNumberDisplay.textContent = materialData[9] || 'N/A'; // Numero de Parte Cliente (index 9)
+            } else {
+                console.error("Material data not found for barcode generation:", materialId);
+                openErrorModal("No se encontraron datos para generar el código de barras.");
+                return;
+            }
+
+            // Show the modal
+            openBarcodeModal();
+        }
+
+        // Function to print the barcode and related information
+        function printBarcode() {
+            const barcodeContent = document.getElementById("barcodePrintArea").innerHTML; // Select the specific area to print
+            const originalBody = document.body.innerHTML;
+
+            document.body.innerHTML = barcodeContent;
+            window.print();
+            document.body.innerHTML = originalBody; // Restore the original content
+            window.location.reload(); // Reload to ensure all scripts and listeners are re-attached
+        }
+
+        async function simularEscaneo() {
+            const scannedId = document.getElementById("barcodeScannerInput").value;
+
+            if (!scannedId) {
+                displayFilteredMaterials([]);
+                const cuerpoTabla = document.getElementById("cuerpoTablaDatos");
+                const fila = cuerpoTabla.insertRow();
+                const celda = fila.insertCell();
+                celda.colSpan = 14;
+                celda.textContent = "Por favor, ingresa un ID para simular el escaneo.";
+                document.getElementById("barcodeScannerInput").value = ''; // Clear the input
+                return;
+            }
+
+            try {
+                const response = await fetch(`/obtener/${scannedId}`);
+                const data = await response.json(); // Data will be an array if found, or null/empty
+                if (data && data.length > 0) { // Check if data is not empty
+                    displayFilteredMaterials([data]); // Show only the scanned material
+                } else {
+                    displayFilteredMaterials([]);
+                    const cuerpoTabla = document.getElementById("cuerpoTablaDatos");
+                    const fila = cuerpoTabla.insertRow();
+                    const celda = fila.insertCell();
+                    celda.colSpan = 14;
+                    celda.textContent = `No se encontró material con ID: ${scannedId}.`;
+                }
+            } catch (error) {
+                console.error("Error al simular escaneo:", error);
+                openErrorModal("Error al buscar material por ID. Revisa tu conexión o el ID.");
+            }
+            document.getElementById("barcodeScannerInput").value = ''; // Clear the input after scanning
+        }
+
+        // --- Enhanced function to prepare and print the format ---
+        async function prepararEImprimirFormato(materialDataOrId) {
+            let materialToPrint = {};
+
+            // Determine if an object or an ID was passed
+            if (typeof materialDataOrId === 'object' && materialDataOrId !== null && !materialDataOrId.target) {
+                // Case 1: An object was provided (e.g., from newly saved form data)
+                materialToPrint = { ...materialDataOrId }; // Create a copy to avoid modifying the original
+            } else if (typeof materialDataOrId === 'number' || typeof materialDataOrId === 'string') {
+                // Case 2: An ID was provided (e.g., from a table button)
+                try {
+                    const response = await fetch(`/obtener/${materialDataOrId}`);
+                    const data = await response.json(); // 'data' is an array of values (Flask tuple)
+
+                    // Map array data to a more readable object structure
+                    // Ensure indices match your backend structure
+                    // [id, display_material, proveedor, longitud_barra, peso_barra, longitud_pieza, cantidad_laton, piezas_por_barra, cantidad_kilogramos, numero_parte (cliente), no_parte_interno, tipo_materia_prima, diametro_material, volumen_kg, horas_x_pieza]
+                    materialToPrint = {
+                        id: data[0] || '', // Add the ID for the barcode in the format
+                        material: data[1] || '', // no_parte_interno or original material
+                        proveedor: data[2] || '',
+                        longitud_barra: parseFloat(data[3]) || 0,
+                        peso_barra: parseFloat(data[4]).toFixed(2) || '0.00',
+                        longitud_pieza: parseFloat(data[5]) || 0,
+                        cantidad_laton: parseInt(data[6]) || 0,
+                        piezas_por_barra: parseInt(data[7]) || 0,
+                        numero_parte: data[9] || '', // numero_parte (no_parte_cliente)
+                        no_parte_interno: data[10] || '', // no_parte_interno from DB
+                        cantidad_kilogramos: parseFloat(data[8]).toFixed(2) || '0.00',
+                        // Recalculate these values if the print format needs them updated
+                        longitud_con_scrap: ((parseFloat(data[5]) || 0) * 25.4 + 2) * 1.02,
+                        cantidad_de_orden: (parseInt(data[6]) || 0) * (parseInt(data[7]) || 0),
+                        horas_x_pieza: data[14] !== null ? parseFloat(data[14]) : '', // Corrected index for horas_x_pieza
+                        tipo_materia_prima: data[11] || '', // Tipo materia prima (index 11)
+                        diametro_material: data[12] || '', // in MM (index 12)
+                        volumen_kg: (parseFloat(data[13]) || 0).toFixed(6), // Volume kg (index 13)
+                        // Other fields your print format might need
+                    };
+
+                } catch (error) {
+                    console.error('Error al obtener material para impresión:', error);
+                    openErrorModal('No se pudo cargar la información para imprimir. Asegúrate de que el servidor Flask esté corriendo y el ID sea válido.');
+                    return;
+                }
+            } else {
+                // Case 3: No argument provided (e.g., "Print Current Format" button from the form)
+                // Get data from the current form
+                const fuenteMaterial = document.getElementById("fuente_material").value;
+                let materialName = '';
+                let noParteInternoValue = '';
+
+                if (fuenteMaterial === 'partes_piezas') {
+                    const noParteInternoSelect = document.getElementById("noParteInternoSelect");
+                    materialName = noParteInternoSelect.options[noParteInternoSelect.selectedIndex] ? noParteInternoSelect.options[noParteInternoSelect.selectedIndex].textContent : '';
+                    noParteInternoValue = noParteInternoSelect.value;
+                } else {
+                    const materialSelect = document.getElementById("material");
+                    materialName = materialSelect.options[materialSelect.selectedIndex] ? materialSelect.options[materialSelect.selectedIndex].textContent : '';
+                }
+
+                materialToPrint = {
+                    id: '', // No ID available if printing from an unsaved form
+                    material: materialName,
+                    proveedor: document.getElementById("proveedor").value,
+                    longitud_barra: parseFloat(document.getElementById("longitudBarra").value) || 0,
+                    peso_barra: parseFloat(document.getElementById("pesoBarra").value).toFixed(2) || '0.00',
+                    longitud_pieza: parseFloat(document.getElementById("longitudPieza").value) || 0,
+                    cantidad_laton: parseInt(document.getElementById("cantidadLaton").value) || 0,
+                    numero_parte: document.getElementById("numeroParte").value,
+                    cantidad_kilogramos: parseFloat(document.getElementById("cantidadKilogramos").textContent).toFixed(2) || '0.00',
+                    longitud_con_scrap: parseFloat(document.getElementById("longitudConScrap").textContent) || 0,
+                    piezas_por_barra: parseInt(document.getElementById("piezasPorBarra").textContent) || 0,
+                    cantidad_de_orden: parseInt(document.getElementById("cantidadDeOrdenDisplay").textContent) || 0,
+                    horas_x_pieza: parseFloat(document.getElementById("horasXPiezaInput")?.value) || 0, // Ensure current input value is captured
+                    tipo_materia_prima: document.getElementById("tipoMateriaPrima").value || '',
+                    diametro_material: document.getElementById("diametroMaterialInput").value || '',
+                    volumen_kg: (parseFloat(document.getElementById("volumenKgDisplay").textContent) || 0).toFixed(6),
+                    no_parte_interno: noParteInternoValue // The Internal Part Number
+                };
+            }
+
+            // Calculate horas_requeridas for materialToPrint (if not already calculated)
+            const cantidadDeOrdenForCalc = parseInt(materialToPrint.cantidad_de_orden) || 0;
+            const piezaXHoraForCalc = materialToPrint.horas_x_pieza !== null && materialToPrint.horas_x_pieza !== undefined ? parseFloat(materialToPrint.horas_x_pieza) : null;
+
+            let horasRequeridasCalculadas = 'N/A';
+            if (cantidadDeOrdenForCalc > 0 && piezaXHoraForCalc !== null && piezaXHoraForCalc > 0) {
+                const calculatedHours = cantidadDeOrdenForCalc / piezaXHoraForCalc;
+                horasRequeridasCalculadas = Math.round(calculatedHours);
+            }
+            materialToPrint.horas_requeridas = horasRequeridasCalculadas; // Add to the object
+
+            console.log('Datos que se guardarán en localStorage para impresión:', materialToPrint);
+
+            if (Object.keys(materialToPrint).length > 0) {
+                localStorage.setItem('materialToPrint', JSON.stringify(materialToPrint));
+                window.open('/formato_impresion', '_blank');
+            } else {
+                openErrorModal("No hay datos para imprimir.");
+            }
+        }
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+    // --- Referencias a los elementos principales de los modales (son necesarios para funciones como openModal/closeModal) ---
+    // NO los usamos para adjuntar event listeners directos si delegamos, pero sí para las funciones de cierre.
+    const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+    const barcodeModal = document.getElementById("barcodeModal");
+    const errorModal = document.getElementById("errorModal");
+    const customConfirmModal = document.getElementById("customConfirmModal");
+
+    // También necesitarás estas variables para que las funciones customConfirmYesBtn y customConfirmNoBtn
+    // puedan ser delegadas si no son variables globales. Si son globales, no las declares aquí.
+    // Asumo que 'customConfirmPromiseResolve' es una variable global o declarada fuera de este bloque.
+    const customConfirmYesBtn = document.getElementById("customConfirmYesBtn");
+    const customConfirmNoBtn = document.getElementById("customConfirmNoBtn");
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn"); // Este lo mantenemos para su listener directo
+
+
+    // --- Inicializaciones y cargas iniciales ---
+    if (window.location.protocol === 'file:') {
+        openErrorModal("Parece que estás abriendo el archivo HTML directamente. Para que la aplicación funcione correctamente, necesitas ejecutar el servidor Flask.");
+    }
+    cargarDatosTabla();
+    cargarNumerosParteInternos(); // Carga los números de parte al inicio
+
+    // Inicializa los valores mostrados a 0.00 o 0 al cargar la página
+    document.getElementById("longitudConScrap").textContent = "0.00";
+    document.getElementById("longitudPiezaConvertidaDisplay").textContent = "0.00";
+    document.getElementById("piezasPorBarra").textContent = "0";
+    document.getElementById("cantidadKilogramos").textContent = "0.00";
+    document.getElementById("volumenKgDisplay").textContent = "0.00 m³";
+    document.getElementById("cantidadDeOrdenDisplay").textContent = "0";
+
+    // --- Listeners de cambio de input para cálculos ---
+    document.getElementById("cantidadLaton").addEventListener("input", actualizarDatos);
+    document.getElementById("longitudPieza").addEventListener("input", actualizarDatos);
+    document.getElementById("longitudBarra").addEventListener("input", actualizarDatos);
+    document.getElementById("diametroMaterialInput").addEventListener("input", actualizarDatos);
+
+    // Listener para cambio de fuente del material
+    document.getElementById("fuente_material").addEventListener("change", (event) => cargarTiposMaterialPorFuente(event.target.value));
+
+    // Listener para selección de No. Parte Interno
+    document.getElementById("noParteInternoSelect").addEventListener("change", seleccionarNoParteInterno);
+
+    // Listener para cambio de Tipo de Materia Prima (para densidad)
+    document.getElementById("tipoMateriaPrima").addEventListener("change", actualizarDensidad);
+
+    // Listener para el input de búsqueda
+    document.getElementById("busqueda").addEventListener("input", buscarMaterial);
+
+    // --- Listeners para botones principales (usan IDs para claridad y evitan onclick inline) ---
+    document.getElementById("guardarMaterialBtn").addEventListener("click", guardarMaterial);
+    document.getElementById("limpiarFormularioBtn").addEventListener("click", limpiarFormulario);
+
+    // Listener para el botón "Sí, Eliminar" del modal (lo mantenemos directo ya que no es un botón de cierre genérico)
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", async () => {
+            if (materialIdToDelete !== null) {
+                await eliminarMaterial(materialIdToDelete);
+                // closeDeleteConfirmModal(); // La función eliminarMaterial ya lo llama si es exitoso
+            }
+        });
+    }
+
+    // Listener para el botón de impresión de código de barras
+    document.getElementById("printBarcodeBtn").addEventListener("click", printBarcode);
+
+    // Listener para el botón de simulación de escaneo
+    document.getElementById("simulateScanBtn").addEventListener("click", simularEscaneo);
+
+    // --- DELEGACIÓN DE EVENTOS PARA LOS BOTONES DE CERRAR MODALES ---
+    // Este listener se adjunta al 'document' y capturará los clics de los botones de cerrar modales
+    // sin importar cuándo o cómo aparezcan en el DOM.
+    document.addEventListener("click", (event) => {
+        const targetId = event.target.id; // ID del elemento que fue clickeado
+        const targetClassList = event.target.classList; // Clases del elemento clickeado
+
+        // console.log("Clic detectado en:", event.target); // Útil para depuración
+
+        // Cierre del Modal de Confirmación de Eliminación (Cancelar y X)
+        if (targetId === "cancelDeleteBtn" || targetId === "closeDeleteModalBtn") {
+            console.log("Delegación: Clic en 'Cancelar' o 'X' del modal de eliminación.");
+            closeDeleteConfirmModal();
+        }
+        // Cierre del Modal de Errores (X y botón Cerrar)
+        else if (targetId === "closeErrorModalBtn" || (targetClassList.contains('btn') && event.target.textContent.includes('Cerrar') && event.target.closest('#errorModal'))) {
+            console.log("Delegación: Clic en 'Cerrar' o 'X' del modal de error.");
+            closeErrorModal();
+        }
+        // Cierre del Modal de Código de Barras (X y botón Cerrar)
+        else if (targetId === "closeBarcodeModalBtn" || (targetClassList.contains('btn') && event.target.textContent.includes('Cerrar') && event.target.closest('#barcodeModal'))) {
+            console.log("Delegación: Clic en 'Cerrar' o 'X' del modal de código de barras.");
+            closeBarcodeModal();
+        }
+        // Custom Confirm Modal (Sí/No)
+        else if (targetId === "customConfirmYesBtn") {
+            console.log("Delegación: Clic en 'Sí' del modal de confirmación custom.");
+            if (customConfirmPromiseResolve) {
+                customConfirmPromiseResolve(true);
+                closeCustomConfirmModal();
+            }
+        }
+        else if (targetId === "customConfirmNoBtn") {
+            console.log("Delegación: Clic en 'No' del modal de confirmación custom.");
+            if (customConfirmPromiseResolve) {
+                customConfirmPromiseResolve(false);
+                closeCustomConfirmModal();
+            }
+        }
+    });
+    // Initial update for form when loaded (useful if there are default values)
+    actualizarDatos();
+});
+    </script>
+</body>
+</html>

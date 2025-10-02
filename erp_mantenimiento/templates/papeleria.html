@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"  href="/static/style.css">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Gambetas</title>
+</head>
+<nav>
+    <header>
+      <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+    </header>
+    <h2>MATSA - Base de datos</h2>
+  <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacenamiento</a>
+                </div>
+                <div id="almacenamiento-menu" class="dropdown-menu">
+                    <a href="/listas_lockers">Listas de Lockers</a>
+                    <a href="/gambetas">Gambeta</a>
+                    <a href="/carrito_de_herramientas">Carrito de herramientas</a>
+                    <a href="/estanterias">Estanteria</a>
+                    <a href="/bandas">Zona de bandas</a>
+                    <a href="/lista_numeros_de_parte_y_piezas_por_barra">Numeros de parte</a>
+                    <a href="/papeleria">Papeleria</a>
+                </div>
+            </li>
+            <!--
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+                <div>
+
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Piezas y Empaquetado</a>
+                </div>
+                <div>
+
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/compras">Compras</a>
+                </div>
+                <div>
+
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                   <a href="/ventas">Ventas</a> 
+                </div>
+                <div>
+
+                </div>
+            </li>
+            -->
+        </ul>
+  </nav>
+<main>
+        <h2 id="formTitle">Registro de Productos en la Papelería</h2>
+
+        <div id="toastContainer" class="toast-container"></div>
+
+        <div>
+            <form id="papeleriaForm">
+                <section class="form-section">
+                    <input type="hidden" id="papeleriaId">
+
+                    <div>
+                        <label for="lugar_zona">Lugar de la Zona</label>
+                        <select id="lugar_zona" name="lugar_zona" required>
+                            <option value="">Seleccione una opción</option>
+                            <option value="Papeleria">Papeleria</option>
+                            <option value="Medicamento">Medicamento</option>
+                            <option value="Seguridad">Seguridad</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="nombre_producto">Nombre del Producto</label>
+                        <input type="text" id="nombre_producto" name="nombre_producto" required>
+                    </div>
+                    <div>
+                        <label for="medida_descripcion">Medida/Descripción (Opcional)</label>
+                        <input type="text" id="medida_descripcion" name="medida_descripcion">
+                    </div>
+                    <div>
+                        <label for="codigo">Código (Opcional)</label>
+                        <input type="text" id="codigo" name="codigo">
+                    </div>
+                    <div>
+                        <label for="valor_unitario">Valor Unitario ($)</label>
+                        <input type="number" id="valor_unitario" name="valor_unitario" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="cantidad_actual">Cantidad Actual</label>
+                        <input type="number" id="cantidad_actual" name="cantidad_actual" required min="0">
+                    </div>
+                    <div>
+                        <label for="cantidad_minima">Cantidad Mínima</label>
+                        <input type="number" id="cantidad_minima" name="cantidad_minima" required min="0">
+                    </div>
+                    <div>
+                        <label for="cantidad_maxima">Cantidad Máxima</label>
+                        <input type="number" id="cantidad_maxima" name="cantidad_maxima" required min="0">
+                    </div>
+                    <div style="grid-column: 1 / -1;"> <label for="observaciones_requerimientos">Observaciones/Requerimientos (Opcional)</label>
+                        <textarea id="observaciones_requerimientos" name="observaciones_requerimientos" rows="3"></textarea>
+                    </div>
+                </section>
+                <div class="form-buttons">
+                    <button type="submit">Guardar Producto</button>
+                    <button type="button" id="cancelEdit" class="accion-btn cancel hidden">Cancelar Edición</button>
+                </div>
+            </form>
+        </div>
+
+        <section class="form-buttons">
+            <section class="form-section">
+                <h3>Buscar Producto</h3>
+                <input type="text" id="searchPapeleriaInput" placeholder="Buscar por Nombre o Medida...">
+                <button id="clearSearchBtn">Limpiar</button>
+            </section>
+        </section>
+
+        <div>
+            <h2>Productos Registrados</h2>
+            <table id="tablaPapeleria">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Zona</th>
+                        <th>Producto</th>
+                        <th>Medida/Descripción</th>
+                        <th>Código</th>
+                        <th>Valor Unitario</th>
+                        <th>Cant. Actual</th>
+                        <th>Cant. Mínima</th>
+                        <th>Cant. Máxima</th>
+                        <th>Observaciones/Requerimientos</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="papeleriaTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de que quieres eliminar este producto?</p>
+            <div>
+                <button id="confirmDeleteBtn" class="accion-btn delete">Eliminar</button>
+                <button onclick="closeModal()" class="accion-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Declaración de variables, asegurando que se obtienen los elementos
+        const papeleriaForm = document.getElementById('papeleriaForm');
+        const papeleriaIdInput = document.getElementById('papeleriaId');
+        const formTitle = document.getElementById('formTitle');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const papeleriaTableBody = document.getElementById('papeleriaTableBody');
+        const searchPapeleriaInput = document.getElementById('searchPapeleriaInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Modal elements
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let papeleriaToDeleteId = null; // Variable para almacenar el ID del producto a eliminar
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPapeleria(); // Cargar productos al cargar la página
+
+            if (papeleriaForm) {
+                papeleriaForm.addEventListener('submit', async (e) => {
+                    e.preventDefault(); // Previene el envío del formulario por defecto
+                    await savePapeleria(); // Llama a la función para guardar/actualizar el producto
+                });
+            } else {
+                console.error("Error: El elemento 'papeleriaForm' no se encontró en el DOM.");
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', clearForm);
+            } else {
+                console.error("Error: El elemento 'cancelEditBtn' no se encontró en el DOM.");
+            }
+            
+            if (searchPapeleriaInput) {
+                searchPapeleriaInput.addEventListener('input', searchPapeleria);
+            } else {
+                console.error("Error: El elemento 'searchPapeleriaInput' no se encontró en el DOM.");
+            }
+
+            if (clearSearchBtn) {
+                clearSearchBtn.addEventListener('click', () => {
+                    if (searchPapeleriaInput) searchPapeleriaInput.value = '';
+                    fetchPapeleria();
+                });
+            } else {
+                console.error("Error: El elemento 'clearSearchBtn' no se encontró en el DOM.");
+            }
+            
+            if (papeleriaTableBody) {
+                papeleriaTableBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('edit-btn')) {
+                        const id = e.target.dataset.id;
+                        editPapeleria(id);
+                    } else if (e.target.classList.contains('delete-btn')) {
+                        const id = e.target.dataset.id;
+                        openModal(id);
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'papeleriaTableBody' no se encontró en el DOM.");
+            }
+
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (papeleriaToDeleteId) {
+                        await deletePapeleria(papeleriaToDeleteId);
+                        closeModal();
+                    }
+                });
+            } else {
+                console.error("Error: El elemento 'confirmDeleteBtn' no se encontró en el DOM.");
+            }
+
+            // Toggle para el menú desplegable (si tienes uno en tu nav)
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function() {
+                    const dropdownMenu = this.nextElementSibling;
+                    if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                    }
+                });
+            }
+        });
+
+        // Función para mostrar mensajes como "toast"
+        function showMessage(message, type) {
+            if (!toastContainer) {
+                console.error("Error: El elemento 'toastContainer' no se encontró en el DOM. Mensaje: " + message);
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            // Eliminar el toast después de 5 segundos (coincide con la duración de la animación CSS)
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        // Función para abrir el modal de confirmación
+        function openModal(id) {
+            papeleriaToDeleteId = id;
+            if (deleteConfirmModal) {
+                deleteConfirmModal.style.display = 'flex';
+            } else {
+                console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+            }
+        }
+
+        // Función para cerrar el modal de confirmación
+        function closeModal() {
+            if (deleteConfirmModal) {
+                deleteConfirmModal.style.display = 'none';
+                papeleriaToDeleteId = null;
+            } else {
+                console.error("Error: El elemento 'deleteConfirmModal' no se encontró en el DOM.");
+            }
+        }
+
+        // Función para obtener y mostrar todos los productos de papelería
+        async function fetchPapeleria() {
+            try {
+                const response = await fetch('/obtener_papeleria');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const papeleria = await response.json();
+                renderTable(papeleria);
+            } catch (error) {
+                console.error('Error al obtener productos de papelería:', error);
+                showMessage('Error al cargar los productos de papelería.', 'error');
+            }
+        }
+
+        // Función para renderizar la tabla de productos de papelería
+        function renderTable(productos) {
+            if (!papeleriaTableBody) {
+                console.error("Error: El elemento 'papeleriaTableBody' no se encontró en el DOM, no se puede renderizar la tabla.");
+                return;
+            }
+            papeleriaTableBody.innerHTML = ''; 
+            const totalColumns = 11; // ID, Zona, Producto, Medida/Desc, Codigo, Valor Unitario, Cant Actual, Cant Minima, Cant Maxima, Observaciones, Acciones
+
+            if (productos.length === 0) {
+                const row = papeleriaTableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = totalColumns;
+                cell.textContent = 'No hay productos de papelería registrados.';
+                cell.style.textAlign = 'center';
+                return;
+            }
+
+            productos.forEach((producto) => {
+                const row = papeleriaTableBody.insertRow();
+                row.innerHTML = `
+                    <td>${producto[0]}</td> <td>${producto[1]}</td> <td>${producto[2]}</td> <td>${producto[3] || 'N/A'}</td> <td>${producto[4] || 'N/A'}</td> <td>$${(producto[5] !== null ? producto[5] : 'N/A')}</td> <td>${producto[6]}</td> <td>${producto[7]}</td> <td>${producto[8]}</td> <td>${producto[9] || 'N/A'}</td> <td>
+                        <button class="accion-btn edit-btn" data-id="${producto[0]}">Editar</button>
+                        <button class="accion-btn delete-btn" data-id="${producto[0]}">Eliminar</button>
+                    </td>
+                `;
+            });
+        }
+
+        // Función para guardar o actualizar producto de papelería
+        async function savePapeleria() {
+            // Referencias a los elementos del formulario
+            const lugarZonaEl = document.getElementById('lugar_zona');
+            const nombreProductoEl = document.getElementById('nombre_producto');
+            const medidaDescripcionEl = document.getElementById('medida_descripcion');
+            const codigoEl = document.getElementById('codigo');
+            const valorUnitarioEl = document.getElementById('valor_unitario');
+            const cantidadActualEl = document.getElementById('cantidad_actual');
+            const cantidadMinimaEl = document.getElementById('cantidad_minima');
+            const cantidadMaximaEl = document.getElementById('cantidad_maxima');
+            const observacionesRequerimientosEl = document.getElementById('observaciones_requerimientos');
+
+            // Verificaciones defensivas para los elementos requeridos
+            if (!papeleriaIdInput || !lugarZonaEl || !nombreProductoEl || 
+                !cantidadActualEl || !cantidadMinimaEl || !cantidadMaximaEl) {
+                showMessage('Error: Faltan campos requeridos (Zona, Nombre de Producto, Cantidades).', 'error');
+                return;
+            }
+
+            const id = papeleriaIdInput.value;
+            const url = id ? `/actualizar_papeleria/${id}` : '/guardar_papeleria';
+            const method = 'POST';
+
+            const data = {
+                lugar_zona: lugarZonaEl.value,
+                nombre_producto: nombreProductoEl.value,
+                medida_descripcion: medidaDescripcionEl ? medidaDescripcionEl.value : '',
+                codigo: codigoEl ? codigoEl.value : '',
+                valor_unitario: valorUnitarioEl && valorUnitarioEl.value !== '' ? parseFloat(valorUnitarioEl.value) : null,
+                cantidad_actual: parseInt(cantidadActualEl.value) || 0,
+                cantidad_minima: parseInt(cantidadMinimaEl.value) || 0,
+                cantidad_maxima: parseInt(cantidadMaximaEl.value) || 0,
+                observaciones_requerimientos: observacionesRequerimientosEl ? observacionesRequerimientosEl.value : ''
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(result.message || 'Operación exitosa.', 'success');
+                    clearForm();
+                    fetchPapeleria();
+                } else {
+                    showMessage(result.message || 'Error en la operación.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al guardar/actualizar el producto de papelería:', error);
+                showMessage('Error de conexión o servidor.', 'error');
+            }
+        }
+
+        // Función para cargar los datos de un producto en el formulario para edición
+        async function editPapeleria(id) {
+            try {
+                const response = await fetch(`/obtener_papeleria/${id}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const producto = await response.json();
+                
+                // Asignar valores a los campos del formulario
+                if (papeleriaIdInput) papeleriaIdInput.value = producto[0];
+                if (document.getElementById('lugar_zona')) document.getElementById('lugar_zona').value = producto[1];
+                if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = producto[2];
+                if (document.getElementById('medida_descripcion')) document.getElementById('medida_descripcion').value = producto[3] || '';
+                if (document.getElementById('codigo')) document.getElementById('codigo').value = producto[4] || '';
+                if (document.getElementById('valor_unitario')) document.getElementById('valor_unitario').value = producto[5] !== null ? producto[5] : '';
+                if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = producto[6];
+                if (document.getElementById('cantidad_minima')) document.getElementById('cantidad_minima').value = producto[7];
+                if (document.getElementById('cantidad_maxima')) document.getElementById('cantidad_maxima').value = producto[8];
+                if (document.getElementById('observaciones_requerimientos')) document.getElementById('observaciones_requerimientos').value = producto[9] || '';
+
+                if (formTitle) formTitle.textContent = 'Editar Producto de Papelería'; 
+                if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error al obtener el producto para edición:', error);
+                showMessage('Error al cargar los datos del producto para edición.', 'error');
+            }
+        }
+
+        // Función para eliminar un producto
+        async function deletePapeleria(id) {
+            try {
+                const response = await fetch(`/eliminar_papeleria/${id}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    showMessage(result.message || 'Producto de papelería eliminado correctamente.', 'success');
+                    fetchPapeleria();
+                } else {
+                    showMessage(result.message || 'Error al eliminar el producto de papelería.', 'error');
+                }
+            } catch (error) {
+                console.error('Error al eliminar el producto de papelería:', error);
+                showMessage('Error de conexión al intentar eliminar el producto de papelería.', 'error');
+            }
+        }
+
+        // Función para buscar producto por Nombre o Medida
+        async function searchPapeleria() {
+            if (!searchPapeleriaInput) {
+                console.error("Error: El elemento 'searchPapeleriaInput' no se encontró en el DOM, no se puede buscar.");
+                return;
+            }
+            const searchTerm = searchPapeleriaInput.value.trim();
+            try {
+                const response = await fetch(`/buscar_papeleria?q=${encodeURIComponent(searchTerm)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const productos = await response.json();
+                renderTable(productos);
+            } catch (error) {
+                console.error('Error al buscar productos de papelería:', error);
+                showMessage('Error al buscar productos de papelería.', 'error');
+            }
+        }
+
+        // Función para limpiar el formulario y volver al modo de agregar
+        function clearForm() {
+            if (papeleriaForm) papeleriaForm.reset();
+            if (papeleriaIdInput) papeleriaIdInput.value = '';
+            if (formTitle) formTitle.textContent = 'Registro de Productos en la Papelería'; 
+            if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+
+            // Limpiar campos individuales para mayor seguridad
+            if (document.getElementById('lugar_zona')) document.getElementById('lugar_zona').value = '';
+            if (document.getElementById('nombre_producto')) document.getElementById('nombre_producto').value = '';
+            if (document.getElementById('medida_descripcion')) document.getElementById('medida_descripcion').value = '';
+            if (document.getElementById('codigo')) document.getElementById('codigo').value = '';
+            if (document.getElementById('valor_unitario')) document.getElementById('valor_unitario').value = '';
+            if (document.getElementById('cantidad_actual')) document.getElementById('cantidad_actual').value = '';
+            if (document.getElementById('cantidad_minima')) document.getElementById('cantidad_minima').value = '';
+            if (document.getElementById('cantidad_maxima')) document.getElementById('cantidad_maxima').value = '';
+            if (document.getElementById('observaciones_requerimientos')) document.getElementById('observaciones_requerimientos').value = '';
+        }
+    </script>   
+</body>
+</html>

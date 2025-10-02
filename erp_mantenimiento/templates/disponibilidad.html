@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Disponibilidad</title>
+    
+    <style>
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+        display: flex;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        max-width: 400px;
+        min-width: 300px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .close-modal {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close-modal:hover,
+    .close-modal:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+        
+    .toast {
+        min-width: 250px;
+        max-width: 400px;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+    }
+    
+    .toast.show {
+        animation: slideIn 0.5s forwards;
+    }
+    
+    .toast.hide {
+        animation: fadeOut 0.5s forwards;
+    }
+
+    .toast.info {
+        background-color: #2196F3;
+    }
+    
+    .toast.success {
+        background-color: #4CAF50;
+    }
+    
+    .toast.error {
+        background-color: #F44336;
+    }     
+    .legend-container {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 20px;
+        font-size: 1.1em;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+    </style>
+</head>
+
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+                <div id="piezas-menu" class="dropdown-menu">
+                    <a href="/lista_numeros_de_parte_y_piezas_por_barra">Numeros de parte</a>
+                    <a href="/eficiencia">Eficiencia</a>
+                    <a href="/disponibilidad">Disponibilidad</a>
+                    <a href="/oee">OEE</a>
+                    <a href="/tiempo_muerto_scrap">Tiempo muerto</a>
+                </div>
+            </li>
+            {% if user_role == 'admin' %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main>
+        
+        <h2>Disponibilidad de tornos - Producción</h2>
+        
+        <section class="form-section">
+            <div>
+                <label for="seleccionarTorno">Seleccionar torno:</label>
+                <select id="seleccionarTorno">
+                    <option value="">-- Selecciona un torno --</option>
+                </select>
+            </div>
+            <div>
+                <label for="fechaParoInput">Fecha:</label>
+                <select id="fechaParoInput">
+                    <option value="">-- Selecciona una fecha --</option>
+                </select>
+            </div>
+            <div>
+                <label for="operadorParo">Operador:</label>
+                <select id="operadorParo">
+                    <option value="">-- Selecciona un operador --</option>
+                </select>
+            </div>
+            <div>
+                <label for="noParteInternoParo">No. parte interno:</label>
+                <select id="noParteInternoParo">
+                    <option value="">-- Selecciona un no. de parte --</option>
+                </select>
+            </div>
+            <div>
+                <label for="estandarParo">Estándar:</label>
+                <input type="number" id="estandarParo" min="0">
+            </div>
+            <div>
+                <label for="minutosParoInput">Minutos de paro:</label>
+                <input type="number" id="minutosParoInput" min="1">
+            </div>
+            <div>
+                <div>
+    <label for="causaParo">Causa de paro:</label>
+    <select id="causaParo">
+        <option value="">-- Selecciona una causa --</option>
+        <option value="AJUSTE DE LONGITUD">AJUSTE DE LONGITUD</option>
+        <option value="AJUSTE DE DIÁMETRO EXTERNO">AJUSTE DE DIÁMETRO EXTERNO</option>
+        <option value="AJUSTE DE DIÁMETRO INTERNO">AJUSTE DE DIÁMETRO INTERNO</option>
+        <option value="AFILADO DE BURIL DE CORTE">AFILADO DE BURIL DE CORTE</option>
+        <option value="AFILADO DE BURIL DE CAREO">AFILADO DE BURIL DE CAREO</option>
+        <option value="AFILADO DE BURIL DE DESBASTE">AFILADO DE BURIL DE DESBASTE</option>
+        <option value="AFILADO DE MACHUELO">AFILADO DE MACHUELO</option>
+        <option value="AFILADO DE ESPADA">AFILADO DE ESPADA</option>
+        <option value="CAMBIO DE MACHUELO">CAMBIO DE MACHUELO</option>
+        <option value="AJUSTE DE TIEMPOS TORNO">AJUSTE DE TIEMPOS TORNO</option>
+        <option value="FALLA MECANICA TORNO">FALLA MECANICA TORNO</option>
+        <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+        <option value="AJUSTE ROSCADOR">AJUSTE ROSCADOR</option>
+        <option value="FALTA DE MATERIA PRIMA">FALTA DE MATERIA PRIMA</option>
+        <option value="FALTA DE ENERGIA">FALTA DE ENERGIA</option>
+        <option value="PROBLEMA ELECTRICO">PROBLEMA ELECTRICO</option>
+        <option value="FALTA DE PERSONAL">FALTA DE PERSONAL</option>
+        <option value="FALTA DE REFACCIÓN">FALTA DE REFACCIÓN</option>
+        <option value="FALTA DE HERRAMENTALES">FALTA DE HERRAMENTALES</option>
+        <option value="FALTA DE PLAN DE PRODUCCIÓN">FALTA DE PLAN DE PRODUCCIÓN</option>
+        <option value="PRUEBAS MANUFACTURA">PRUEBAS MANUFACTURA</option>
+        <option value="INSPECCIÓN DE PIEZAS">INSPECCIÓN DE PIEZAS</option>
+        <option value="PARO POR CALIDAD">PARO POR CALIDAD</option>
+        <option value="CAMBIO DE NO. DE PARTE">CAMBIO DE NO. DE PARTE</option>
+        <option value="LIMPIEZA DISP. DOBLE BARRENO">LIMPIEZA DISP. DOBLE BARRENO</option>
+        <option value="LIMPIEZA TUBO ALIMENTADOR">LIMPIEZA TUBO ALIMENTADOR</option>
+        <option value="LUBRICACION Y JUNTA">LUBRICACION Y JUNTA</option>
+        <option value="AJUSTE DE MACHUELO NUMERO DE HIJOS">AJUSTE DE MACHUELO NUMERO DE HIJOS</option>
+        <option value="AJUSTE DE BURIL DE CORTE">AJUSTE DE BURIL DE CORTE</option>
+        <option value="AJUSTE DE BURIL DE CAREO">AJUSTE DE BURIL DE CAREO</option>
+        <option value="AJUSTE DE BURIL DE DESBASTE">AJUSTE DE BURIL DE DESBASTE</option>
+        <option value="AJUSTE DE PROFUNDIDAD DE BARRENO">AJUSTE DE PROFUNDIDAD DE BARRENO</option>
+        <option value="AJUSTE DE CAJA GRANDE">AJUSTE DE CAJA GRANDE</option>
+        <option value="AJUSTE DE CAJA CHICA">AJUSTE DE CAJA CHICA</option>
+        <option value="AJUSTE DE DIÁMETRO DE BARRENO">AJUSTE DE DIÁMETRO DE BARRENO</option>
+        <option value="AJUSTE DE DIÁMETRO DE CAJA">AJUSTE DE DIÁMETRO DE CAJA</option>
+        <option value="AJUSTE DE MOLETEADO">AJUSTE DE MOLETEADO</option>
+        <option value="AJUSTE DE RANURA">AJUSTE DE RANURA</option>
+        <option value="DIÁMETRO DE RANURA">DIÁMETRO DE RANURA</option>
+        <option value="CENTRADO">CENTRADO</option>
+        <option value="AJUSTE DE ABELLANADO">AJUSTE DE ABELLANADO</option>
+        <option value="CAMBIO DE RESORTE">CAMBIO DE RESORTE</option>
+        <option value="AJUSTE DE LEVAS">AJUSTE DE LEVAS</option>
+        <option value="REBABA EN CORTE">REBABA EN CORTE</option>
+        <option value="SE SALE EL MATERIAL">SE SALE EL MATERIAL</option>
+        <option value="CAMBIO DE GATILLOS">CAMBIO DE GATILLOS</option>
+        <option value="AJUSTE DE NO-GO DE CAJA">AJUSTE DE NO-GO DE CAJA</option>
+        <option value="SE ABRIÓ LA BOQUILLA">SE ABRIÓ LA BOQUILLA</option>
+        <option value="SE ROMPIÓ BURIL DE CORTE">SE ROMPIÓ BURIL DE CORTE</option>
+        <option value="SE QUEBRÓ LA ESPADA">SE QUEBRÓ LA ESPADA</option>
+        <option value="CHAFLÁN">CHAFLÁN</option>
+        <option value="SE LAVÓ CARRO">SE LAVÓ CARRO</option>
+        <option value="REBABA COMPACTADA">REBABA COMPACTADA</option>
+    </select>
+</div>
+            
+        </section>
+       <div class="form-buttons">
+            <button id="guardarBtn">Guardar</button>
+            <button id="cargarDatosBtn" class="accion-btn confirm-btn">Cargar datos</button> 
+        </div>
+
+        <section class="data-table-section">
+            <h3>Total Semanal de paros</h3>
+            <table id="tablaDisponibilidad">
+                <thead>
+                    <tr id="disponibilidadHeader">
+                        <th>Máquina</th>
+                        <th>Estandar / No. de parte</th>
+                        <th>Causa de Paro</th>
+                        <th>Lunes</th>
+                        <th>Martes</th>
+                        <th>Miércoles</th>
+                        <th>Jueves</th>
+                        <th>Viernes</th>
+                        <th>Sábado</th>
+                        <th>Promedio Tiempo Perdido (horas)</th>
+                        <th>Promedio Disponibilidad Semanal (%)</th>
+                        <th colspan="2">ACCIONES</th>
+
+                    </tr>
+                    <tr id="disponibilidadFechaHeader">
+                        <th colspan="2"></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th colspan="3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <h3>Valores totales semanales</h3>
+            <table id="tablaTotalesSemanales">
+                <thead>
+                    <tr>
+                        <th>Máquina</th>
+                        <th>Día</th>
+                        <th>Total tiempo en minutos</th>
+                        <th>Total tiempo en horas</th>
+                        <th>Disponible %</th>
+                        <th>Prod. estimada vs Tiempo disponible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+    
+    <div id="selectCauseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 id="selectCauseTitle">Selecciona la causa para <span id="modalMaquinaSpan"></span></h3>
+            <p>Causa:</p>
+            <select id="selectCausaParo">
+                <option value="">-- Selecciona una causa --</option>
+            </select>
+            <div class="modal-buttons">
+                <button id="continueActionBtn" class="accion-btn cancel-btn">Continuar</button>
+                <button id="cancelActionBtn" class="accion-btn delete-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirmDeleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <p>¿Quieres eliminar este dato con la causa de paro: <strong id="modalCausaParo"></strong>?</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="accion-btn delete-btn">Sí, eliminar</button>
+                <button id="cancelDeleteBtn" class="accion-btn cancel-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="loadDataModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Selecciona los datos a cargar:</h3>
+            <p>Torno:</p>
+            <select id="selectTornoCarga">
+                <option value="">-- Selecciona un torno --</option>
+            </select>
+            <p>Día:</p>
+            <select id="selectDiaCarga">
+                <option value="">-- Selecciona un día --</option>
+                </select>
+            <div class="modal-buttons">
+                <button id="continueLoadBtn" class="accion-btn confirm-btn">Continuar</button>
+                <button id="cancelLoadBtn" class="accion-btn delete-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toastContainer"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const profileToggle = document.querySelector('.profile-toggle');
+        const profileContainer = document.querySelector('.profile-menu-container-top-right');
+        const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+        if (profileToggle && profileMenu && profileContainer) {
+            profileToggle.addEventListener('click', () => {
+                // Oculta/Muestra el menú usando la clase 'hidden'
+                profileMenu.classList.toggle('hidden'); 
+                // Añade/Remueve la clase 'active' para girar el icono de la flecha
+                profileContainer.classList.toggle('active');
+            });
+        }
+        document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+
+        const seleccionarTorno = document.getElementById('seleccionarTorno');
+        const fechaParoInput = document.getElementById('fechaParoInput');
+        const operadorParo = document.getElementById('operadorParo');
+        const noParteInternoParo = document.getElementById('noParteInternoParo');
+        const estandarParo = document.getElementById('estandarParo');
+        const causaParo = document.getElementById('causaParo');
+        const minutosParoInput = document.getElementById('minutosParoInput');
+        const guardarBtn = document.getElementById('guardarBtn');
+        const tablaDisponibilidad = document.getElementById('tablaDisponibilidad').querySelector('tbody');
+        const tablaTotalesSemanales = document.getElementById('tablaTotalesSemanales').querySelector('tbody');
+        
+        const cargarDatosBtn = document.getElementById('cargarDatosBtn');
+        const loadDataModal = document.getElementById('loadDataModal');
+        const selectTornoCarga = document.getElementById('selectTornoCarga');
+        const selectDiaCarga = document.getElementById('selectDiaCarga');
+        const continueLoadBtn = document.getElementById('continueLoadBtn');
+        const cancelLoadBtn = document.getElementById('cancelLoadBtn');
+
+        const selectCauseModal = document.getElementById('selectCauseModal');
+        const selectCausaParo = document.getElementById('selectCausaParo');
+        const modalMaquinaSpan = document.getElementById('modalMaquinaSpan');
+        const continueActionBtn = document.getElementById('continueActionBtn');
+        const cancelActionBtn = document.getElementById('cancelActionBtn');
+        
+        const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+        const modalCausaParo = document.getElementById('modalCausaParo');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+        const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        const diasLaborales = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        
+        let disponibilidadData = {};
+        let eficienciaData = {};
+        let currentActionType = null;
+        let currentMaquina = null;
+        
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) return;
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                }, { once: true });
+            }, 5000);
+        }
+        
+        function openModal(modalElement) {
+            modalElement.style.display = 'flex';
+            void modalElement.offsetWidth;
+            modalElement.classList.add('show');
+        }
+
+        function closeModal(modalElement) {
+            modalElement.classList.remove('show');
+            setTimeout(() => {
+                modalElement.style.display = 'none';
+            }, 300);
+        }
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) closeModal(modal);
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target);
+            }
+        });
+
+        const fetchEficienciaData = async () => {
+            try {
+                const response = await fetch('/obtener_eficiencias');
+                if (!response.ok) throw new Error('Error al obtener datos de eficiencia');
+                const data = await response.json();
+                
+                data.forEach(item => {
+                    if (!eficienciaData[item.maquina]) {
+                        eficienciaData[item.maquina] = [];
+                    }
+                    eficienciaData[item.maquina].push(item);
+                });
+                
+                llenarSelectTornos();
+                seleccionarTorno.addEventListener('change', () => llenarSelectsDependientes(seleccionarTorno.value));
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showToast('Error al cargar la lista de tornos y datos de eficiencia.', 'error');
+            }
+        };
+        
+        function llenarSelectTornos() {
+            seleccionarTorno.innerHTML = '<option value="">-- Selecciona un torno --</option>';
+            const maquinas = Object.keys(eficienciaData);
+            maquinas.forEach(maquina => {
+                const option = document.createElement('option');
+                option.value = maquina;
+                option.textContent = maquina;
+                seleccionarTorno.appendChild(option);
+            });
+        }
+
+        function getUniqueValues(dataArray, key) {
+            const uniqueValues = new Set();
+            dataArray.forEach(item => {
+                if (item[key]) {
+                    uniqueValues.add(item[key]);
+                }
+            });
+            return Array.from(uniqueValues).sort();
+        }
+
+        function llenarSelectsDependientes(maquinaSeleccionada) {
+            fechaParoInput.innerHTML = '<option value="">-- Selecciona una fecha --</option>';
+            operadorParo.innerHTML = '<option value="">-- Selecciona un operador --</option>';
+            noParteInternoParo.innerHTML = '<option value="">-- Selecciona un no. de parte --</option>';
+            estandarParo.value = '';
+
+            if (maquinaSeleccionada && eficienciaData[maquinaSeleccionada]) {
+                const maquinas = eficienciaData[maquinaSeleccionada];
+                const fechas = getUniqueValues(maquinas, 'fecha');
+                const operadores = getUniqueValues(maquinas, 'nombre_operador');
+                const numerosParte = getUniqueValues(maquinas, 'no_parte_interno');
+                
+                fechas.forEach(fecha => {
+                    const option = document.createElement('option');
+                    option.value = fecha;
+                    option.textContent = fecha;
+                    fechaParoInput.appendChild(option);
+                });
+
+                operadores.forEach(operador => {
+                    const option = document.createElement('option');
+                    option.value = operador;
+                    option.textContent = operador;
+                    operadorParo.appendChild(option);
+                });
+
+                numerosParte.forEach(numero => {
+                    const option = document.createElement('option');
+                    option.value = numero;
+                    option.textContent = numero;
+                    noParteInternoParo.appendChild(option);
+                });
+            }
+        }
+        
+        const processDisponibilidadData = (data) => {
+            const processedData = {};
+            data.forEach(item => {
+                if (!processedData[item.maquina]) {
+                    processedData[item.maquina] = {};
+                }
+                const itemDate = new Date(item.fecha + 'T12:00:00Z');
+                const diaSemana = diasSemana[itemDate.getUTCDay()];
+
+                if (!processedData[item.maquina][diaSemana]) {
+                    processedData[item.maquina][diaSemana] = [];
+                }
+                processedData[item.maquina][diaSemana].push({
+                    ...item,
+                    minutos: item.minutos_perdidos,
+                    noParte: item.no_parte_interno,
+                    estandar: item.estandar,
+                    causa: item.causa
+                });
+            });
+            return processedData;
+        };
+
+        // Modified fetchDisponibilidadData to accept a reference date
+const fetchDisponibilidadData = async (referenceDate = null) => {
+    try {
+        // Construct the URL with a query parameter if a date is provided
+        const url = referenceDate 
+            ? `/obtener_disponibilidades?fecha=${referenceDate}` 
+            : '/obtener_disponibilidades'; // Default to load all or current week
+            
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Error al obtener datos de disponibilidad');
+        const rawData = await response.json();
+        
+        // This processDisponibilidadData assumes the rawData is for ONE WEEK.
+        // If the backend returns all data, you'd filter it here.
+        disponibilidadData = processDisponibilidadData(rawData); 
+        renderTables();
+        
+        if (referenceDate) {
+            showToast('Datos de disponibilidad cargados para la semana seleccionada.', 'success');
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        showToast('Error al cargar la tabla de disponibilidad.', 'error');
+    }
+};
+
+        function renderTables() {
+            mostrarTablaDisponibilidad();
+            mostrarTablaTotalesSemanales();
+        }
+
+// Event listener to open the new modal
+cargarDatosBtn.addEventListener('click', () => {
+    // Fill the torno select with the current efficiency data
+    selectTornoCarga.innerHTML = seleccionarTorno.innerHTML;
+    // Fill the day select
+    llenarSelectDiasCarga(); 
+    openModal(loadDataModal);
+});
+
+// Event listener for the "Continuar" button in the load modal
+continueLoadBtn.addEventListener('click', async () => {
+    const selectedTorno = selectTornoCarga.value;
+    const selectedDia = selectDiaCarga.value;
+
+    if (!selectedTorno || !selectedDia) {
+        showToast('Por favor, selecciona un torno y un día.', 'error');
+        return;
+    }
+    
+    closeModal(loadDataModal);
+    
+    // 1. Find a date for the selected Torno/Dia combination from the current efficiency data
+    let referenceDate = null;
+    if (eficienciaData[selectedTorno]) {
+        // Find an entry matching the selected day of the week
+        const recordsForTorno = eficienciaData[selectedTorno];
+        const dayIndex = diasLaborales.indexOf(selectedDia) + 1; // Assuming Monday=1, Sunday=0/7
+        
+        // Simple client-side way to get a date for the selected day:
+        // *This part is a placeholder, as getting the correct WEEK's data is a BACKEND concern.*
+        // For demonstration, I'll use the *latest* date available for that torno.
+        const latestRecord = recordsForTorno.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))[0];
+        if (latestRecord) {
+            referenceDate = latestRecord.fecha; 
+            // In a real application, you'd need to calculate the *specific* date 
+            // that is the selected day within the desired week.
+        }
+    }
+
+    if (!referenceDate) {
+        showToast('No se encontró una fecha de referencia para ese torno.', 'error');
+        return;
+    }
+
+    // 2. Fetch data for the determined week
+    // In a real app, the backend would use this 'referenceDate' to find the whole week's data.
+    await fetchDisponibilidadData(referenceDate); 
+});
+
+// Event listener for the "Cancelar" button in the load modal
+cancelLoadBtn.addEventListener('click', () => {
+    closeModal(loadDataModal);
+});
+
+function mostrarTablaDisponibilidad() {
+            const tabla = document.getElementById('tablaDisponibilidad');
+            const tbody = tabla.querySelector('tbody') || tabla.appendChild(document.createElement('tbody'));
+            tbody.innerHTML = '';
+            const maquinasUnicas = new Set(Object.keys(disponibilidadData));
+            maquinasUnicas.forEach(maquina => {
+                const parosPorCausaYNoParte = {};
+                let totalMinutosSemana = 0;
+                let numDiasConRegistro = 0;
+                let totalHorasTeoricas = 0;
+
+                diasLaborales.forEach(dia => {
+                    if (disponibilidadData[maquina] && disponibilidadData[maquina][dia] && disponibilidadData[maquina][dia].length > 0) {
+                        numDiasConRegistro++;
+                        totalHorasTeoricas += (dia === "Viernes") ? 6.8 : 8.7;
+                        disponibilidadData[maquina][dia].forEach(p => {
+                            const key = `${p.causa}|${p.noParte}|${p.estandar}`;
+                            if (!parosPorCausaYNoParte[key]) {
+                                parosPorCausaYNoParte[key] = {
+                                    causa: p.causa,
+                                    noParte: p.noParte,
+                                    estandar: p.estandar,
+                                    totalMinutos: 0,
+                                    dias: {}
+                                };
+                            }
+                            parosPorCausaYNoParte[key].totalMinutos += p.minutos;
+                            parosPorCausaYNoParte[key].dias[dia] = p.minutos;
+                            totalMinutosSemana += p.minutos;
+                        });
+                    }
+                });
+
+                const causasUnicas = Object.keys(parosPorCausaYNoParte).sort();
+                if (causasUnicas.length > 0) {
+                    causasUnicas.forEach((key, index) => {
+                        const row = tbody.insertRow();
+                        const paro = parosPorCausaYNoParte[key];
+                        if (index === 0) {
+                            const maquinaCell = row.insertCell();
+                            maquinaCell.textContent = maquina;
+                            maquinaCell.rowSpan = causasUnicas.length;
+                        }
+                        const estandarNoParteCell = row.insertCell();
+                        estandarNoParteCell.textContent = `${paro.estandar} / ${paro.noParte}`;
+
+                        row.insertCell().textContent = paro.causa;
+                        diasLaborales.forEach(dia => {
+                            const cell = row.insertCell();
+                            const minutos = paro.dias[dia] || 0;
+                            cell.textContent = minutos > 0 ? `${minutos} min` : '-';
+                        });
+
+                        if (index === 0) {
+                            const promedioTiempoPerdidoCell = row.insertCell();
+                            const promedioHorasPerdidas = numDiasConRegistro > 0 ? ((totalMinutosSemana / 60) / numDiasConRegistro).toFixed(2) : '0.00';
+                            promedioTiempoPerdidoCell.textContent = `${promedioHorasPerdidas} hrs`;
+                            promedioTiempoPerdidoCell.rowSpan = causasUnicas.length;
+
+                            const promedioDisponibilidadCell = row.insertCell();
+                            const horasDisponiblesSemana = totalHorasTeoricas - (totalMinutosSemana / 60);
+                            const promedioDisponibilidad = totalHorasTeoricas > 0 ? ((horasDisponiblesSemana / totalHorasTeoricas) * 100).toFixed(2) : '100.00';
+                            promedioDisponibilidadCell.textContent = `${promedioDisponibilidad} %`;
+                            promedioDisponibilidadCell.rowSpan = causasUnicas.length;
+
+                            const accionesCell = row.insertCell();
+                            accionesCell.rowSpan = causasUnicas.length;
+                            accionesCell.innerHTML = `
+                                <button class="accion-btn edit-btn" data-maquina="${maquina}">Editar</button>
+                                <button class="accion-btn delete-btn" data-maquina="${maquina}">Eliminar</button>
+                            `;
+                        }
+                    });
+                } else {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = maquina;
+                    row.insertCell().textContent = '-';
+                    row.insertCell().textContent = '-';
+                    diasLaborales.forEach(() => row.insertCell().textContent = '-');
+                    row.insertCell().textContent = '0.00 hrs';
+                    row.insertCell().textContent = '100.00%';
+                    row.insertCell().textContent = '-';
+                }
+            });
+        }
+
+        function mostrarTablaTotalesSemanales() {
+            const tabla = document.getElementById('tablaTotalesSemanales');
+            const tbody = tabla.querySelector('tbody') || tabla.appendChild(document.createElement('tbody'));
+            tbody.innerHTML = '';
+            const maquinasUnicas = new Set(Object.keys(disponibilidadData));
+            maquinasUnicas.forEach(maquina => {
+                let numFilas = 0;
+                const filasParaMaquina = [];
+                diasLaborales.forEach(dia => {
+                    if (disponibilidadData[maquina] && disponibilidadData[maquina][dia] && disponibilidadData[maquina][dia].length > 0) {
+                        numFilas++;
+                        let totalMinutosDia = 0;
+                        let estandarDia = 0;
+                        disponibilidadData[maquina][dia].forEach(p => {
+                            totalMinutosDia += p.minutos;
+                            estandarDia = parseFloat(p.estandar);
+                        });
+                        const totalHorasDia = (totalMinutosDia / 60).toFixed(2);
+                        let horasTeoricasDia = (dia === "Viernes") ? 6.8 : 8.7;
+                        const horasDisponibles = (horasTeoricasDia - totalHorasDia).toFixed(2);
+                        const porcentajeDisponible = ((100 * parseFloat(horasDisponibles)) / horasTeoricasDia).toFixed(2);
+                        const produccionEstimada = (estandarDia * parseFloat(horasDisponibles)).toFixed(2);
+                        filasParaMaquina.push({
+                            dia: dia,
+                            minutos: totalMinutosDia,
+                            horas: horasDisponibles,
+                            disponible: `${porcentajeDisponible} %`,
+                            produccion: produccionEstimada
+                        });
+                    }
+                });
+                if (numFilas > 0) {
+                    filasParaMaquina.forEach((datosFila, index) => {
+                        const row = tbody.insertRow();
+                        if (index === 0) {
+                            const maquinaCell = row.insertCell();
+                            maquinaCell.textContent = maquina;
+                            maquinaCell.rowSpan = numFilas;
+                        }
+                        row.insertCell().textContent = datosFila.dia;
+                        row.insertCell().textContent = datosFila.minutos;
+                        row.insertCell().textContent = datosFila.horas;
+                        row.insertCell().innerHTML = datosFila.disponible;
+                        row.insertCell().textContent = datosFila.produccion;
+                    });
+                } else {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = maquina;
+                    row.insertCell().textContent = '-';
+                    row.insertCell().textContent = '0';
+                    row.insertCell().textContent = '0.00';
+                    const disponibleCell = row.insertCell();
+                    disponibleCell.innerHTML = `<div>-</div><div>-</div>`;
+                    row.insertCell().textContent = '-';
+                }
+            });
+        }
+
+        function llenarSelectDiasCarga() {
+    selectDiaCarga.innerHTML = '<option value="">-- Selecciona un día --</option>';
+    diasLaborales.forEach(dia => {
+        const option = document.createElement('option');
+        option.value = dia;
+        option.textContent = dia;
+        selectDiaCarga.appendChild(option);
+    });
+}
+
+        guardarBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            
+            // Revisa si hay un ID de edición asignado al botón
+            const editId = guardarBtn.dataset.editId;
+            
+            const nuevoRegistro = {
+                maquina: seleccionarTorno.value,
+                fecha: fechaParoInput.value,
+                operador: operadorParo.value,
+                noParteInterno: noParteInternoParo.value,
+                estandarParo: estandarParo.value,
+                causaParo: causaParo.value,
+                minutos: minutosParoInput.value
+            };
+
+            try {
+                // Selecciona la URL y el método correcto según si es una edición o un nuevo registro
+                const url = editId ? `/actualizar_disponibilidad/${editId}` : '/guardar_disponibilidad';
+                const method = 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoRegistro)
+                });
+                
+                const result = await response.json();
+
+                if (response.ok) {
+                    showToast(result.message, 'success');
+                    
+                    // Resetea el formulario y el botón después de una actualización exitosa
+                    guardarBtn.textContent = 'Guardar';
+                    delete guardarBtn.dataset.editId;
+                    seleccionarTorno.value = '';
+                    fechaParoInput.value = '';
+                    operadorParo.value = '';
+                    noParteInternoParo.value = '';
+                    estandarParo.value = '';
+                    causaParo.value = '';
+                    minutosParoInput.value = '';
+                    
+                    // Vuelve a cargar los datos para refrescar la tabla
+                    fetchDisponibilidadData();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (error) {
+                showToast('Error al guardar/actualizar el registro.', 'error');
+            }
+        });
+        function openSelectCauseModal(maquina, action) {
+            currentMaquina = maquina;
+            currentActionType = action;
+
+            if (!disponibilidadData[maquina] || Object.keys(disponibilidadData[maquina]).length === 0) {
+                showToast(`No hay causas de paro registradas para la máquina ${maquina}.`, "error");
+                return;
+            }
+
+            const allRecords = Object.values(disponibilidadData[maquina]).flat();
+            const uniqueCauses = [...new Set(allRecords.map(rec => rec.causa))];
+
+            if (uniqueCauses.length === 0) {
+                showToast(`No hay causas de paro registradas para la máquina ${maquina}.`, "error");
+                return;
+            }
+
+            modalMaquinaSpan.textContent = maquina;
+            selectCausaParo.innerHTML = '<option value="">-- Selecciona una causa --</option>';
+            uniqueCauses.sort().forEach(causa => {
+                const option = document.createElement('option');
+                option.value = causa;
+                option.textContent = causa;
+                selectCausaParo.appendChild(option);
+            });
+
+            openModal(selectCauseModal);
+        }
+
+        document.addEventListener('click', (event) => {
+            const maquina = event.target.dataset.maquina;
+            if (!maquina) {
+                return;
+            }
+
+            if (event.target.classList.contains('edit-btn')) {
+                openSelectCauseModal(maquina, 'edit');
+            } else if (event.target.classList.contains('delete-btn')) {
+                openSelectCauseModal(maquina, 'delete');
+            }
+        });
+
+        continueActionBtn.addEventListener('click', async () => {
+            const selectedCausa = selectCausaParo.value;
+            if (!selectedCausa) {
+                showToast('Por favor, selecciona una causa.', 'error');
+                return;
+            }
+
+            const allRecords = Object.values(disponibilidadData[currentMaquina] || {}).flat();
+            const record = allRecords.find(r => r.causa === selectedCausa);
+
+            if (!record) {
+                showToast('No se encontró el registro para la causa seleccionada.', 'error');
+                return;
+            }
+
+            closeModal(selectCauseModal);
+
+            if (currentActionType === 'delete') {
+                modalCausaParo.textContent = selectedCausa;
+                openModal(confirmDeleteModal);
+                
+                confirmDeleteBtn.onclick = async () => {
+                    try {
+                        const response = await fetch(`/eliminar_disponibilidad/${record.id}`, { method: 'POST' });
+                        const result = await response.json();
+                        if (result.status === 'success') {
+                            showToast(result.message, 'success');
+                            fetchDisponibilidadData();
+                        } else {
+                            showToast(result.message, 'error');
+                        }
+                        closeModal(confirmDeleteModal);
+                    } catch (error) {
+                        showToast('Error al eliminar el registro.', 'error');
+                    }
+                };
+                cancelDeleteBtn.onclick = () => {
+                    closeModal(confirmDeleteModal);
+                };
+            } else if (currentActionType === 'edit') {
+                seleccionarTorno.value = record.maquina;
+                llenarSelectsDependientes(record.maquina);
+                
+                // Estos valores ahora se establecen después de que las opciones del select se han llenado
+                fechaParoInput.value = record.fecha;
+                operadorParo.value = record.nombre_operador;
+                noParteInternoParo.value = record.no_parte_interno;
+                estandarParo.value = record.estandar;
+                causaParo.value = record.causa;
+                minutosParoInput.value = record.minutos_perdidos;
+
+                guardarBtn.textContent = 'Actualizar';
+                guardarBtn.dataset.editId = record.id;
+
+                showToast("Formulario cargado para editar. Modifica los campos y haz clic en 'Actualizar Paro'.", "info");
+            }
+        });
+
+        cancelActionBtn.addEventListener('click', () => {
+            closeModal(selectCauseModal);
+        });
+        
+        
+        fetchEficienciaData();
+        fetchDisponibilidadData();
+        llenarSelectDiasCarga(); 
+    });
+</script>
+</body>
+</html>

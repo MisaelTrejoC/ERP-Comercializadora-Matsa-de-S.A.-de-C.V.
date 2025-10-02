@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/logo empresa.png" type="image/png">
+    <title>Matsa - Panel de control - Mantenimiento</title>
+    <style>
+    /* Estilos adicionales para esta página */
+    .search-container {
+        display: flex;
+        align-items: center; /* Para alinear el texto y la barra verticalmente */
+        justify-content: space-between; /* Distribuye el espacio para que un elemento se vaya a la izquierda y el otro a la derecha */
+
+    }
+    .search-container label {
+    font-size: 1.17em;      /* Hace el texto más grande, similar a un h3 */
+    font-weight: bold;     /* Pone el texto en negritas */
+    }
+
+    .h3-style {
+    font-size: 1.5em; /* Tamaño de fuente típico de un h3 */
+    font-weight: bold; /* El texto en negritas, como un h3 */
+    margin: 0; /* Elimina el margen por defecto */
+    }
+
+    .form-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: #fcfcfc;
+    }
+
+    .form-section .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-section .input-group label {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-section .input-group input[type="text"],
+    .form-section .input-group select,
+    .form-section .input-group input[type="number"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1em;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background-color: #e2342e;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    /* Estilo para la fila arrastrable */
+    tbody tr {
+        cursor: grab;
+    }
+    
+    tbody tr:hover {
+    background-color: #e9e9e9;
+    }
+    
+    tbody tr.dragging {
+        opacity: 0.5;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+    }
+
+    thead th {
+        
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    
+    .maintenance-status-symbol {
+        font-size: 1.5em;
+        cursor: pointer;
+        display: block;
+        text-align: center;
+    }
+    
+    .status-check {
+        color: green;
+    }
+    
+    .status-circle {
+        color: orange;
+    }
+    
+    .status-cross {
+        color: red;
+    }
+
+    /* Estilos del modal con transición, copiados de almacenamiento.html */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        /* Propiedades para la animación */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        /* La clase `show` activará la visibilidad y opacidad */
+    }
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        max-width: 400px;
+        min-width: 300px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    /* ESTILO MODIFICADO PARA EL TOAST */
+/* Estilos para los toasts (mensajes emergentes) */
+    #toastContainer {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1001;
+    }
+    
+    .toast {
+        min-width: 250px;
+        max-width: 400px;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .toast.show {
+        animation: slideIn 0.5s forwards;
+    }
+    
+    .toast.hide {
+        animation: fadeOut 0.5s forwards;
+    }
+
+    .toast.info {
+        background-color: #2196F3; /* Azul */
+    }
+    
+    .toast.success {
+        background-color: #4CAF50; /* Verde */
+    }
+    
+    .toast.error {
+        background-color: #F44336; /* Rojo */
+    }    .legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    font-size: 1.1em;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .legend-symbol {
+        font-size: 1.5em;
+        line-height: 1; /* Para alinear verticalmente */
+    }
+    .status-check { color: green; }
+    .status-circle { color: orange; }
+    .status-cross { color: red; }
+
+     @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+</style>
+</head>
+<body>
+    <div class="profile-menu-container-top-right">
+        <div class="profile-toggle">
+            <div class="profile-toggle-content">
+                
+                <svg class="user-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12ZM12 14C7.02944 14 3 18.0294 3 23H21C21 18.0294 16.9706 14 12 14Z" fill="white"/>
+                </svg>
+                
+                <span id="user-display">{{ session.get('username', 'Invitado') }}</span>
+                <span class="arrow-icon">▲</span>
+            </div>
+        </div>
+        <div class="profile-dropdown-menu hidden">
+            <p><strong>Usuario:</strong> {{ session.get('username', 'Invitado') }}</p>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Cerrar sesión</a>
+        </div>
+    </div>
+    <nav>
+        <header>
+            <img src="/static/logo empresa.png" alt="Logo Empresa"/>
+        </header>
+        <h2>MATSA - Base de datos</h2>
+        <ul>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/">Almacen</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/mantenimento">Mantenimiento</a>
+                </div>
+            </li>
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/piezas">Produccion</a>
+                </div>
+            </li>
+            {% if user_role %}
+            <li class="dropdown">
+                <div class="dropdown-toggle">
+                    <a href="/indicadores">Indicadores</a>
+                </div>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main>
+        <h2>Panel de control - Mantenimiento</h2>
+        <section class="form-section">
+            <div class="input-group">
+                <label for="machineNameInput">Nombre de la máquina:</label>
+                <input type="text" id="machineNameInput" placeholder="Ej: Torno 1 A25">
+            </div>
+            <div class="input-group">
+                <label for="maintenanceRecurrenceInput">Cada cuanto se dará mantenimiento (meses):</label>
+                <input type="number" id="maintenanceRecurrenceInput" min="1" value="1">
+            </div>
+            <div class="input-group">
+                <label for="maintenanceMonthSelect">Mes de mantenimiento:</label>
+                <select id="maintenanceMonthSelect">
+                    <option value="">Selecciona un mes</option>
+                    <option value="Enero">Enero</option>
+                    <option value="Febrero">Febrero</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                    <option value="Octubre">Octubre</option>
+                    <option value="Noviembre">Noviembre</option>
+                    <option value="Diciembre">Diciembre</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="maintenanceWeekSelect">Semana de mantenimiento:</label>
+                <select id="maintenanceWeekSelect">
+                    <option value="">Selecciona una semana</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="button-group">
+            <button id="saveButton" class="btn btn-success">Guardar registro</button>
+        </div>
+        <section class="search-section">
+    <div class="search-container">
+        <label for="searchMachineInput">Buscar máquina:</label>
+        <input type="text" id="searchMachineInput" placeholder="Ingresa el nombre de la máquina">
+    </div>
+</section>
+            <h3>Tabla de mantenimiento por máquina</h3>
+        <section class="form-section">
+            <div class="legend-container">
+    <div class="legend-item">
+        <span class="legend-symbol status-check">✔</span>
+        <span>Mantenimiento completado</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-symbol status-circle">●</span>
+        <span>Mantenimiento en progreso</span>
+    </div>
+    <div class="legend-item">
+        <span class="legend-symbol status-cross">✖</span>
+        <span>Mantenimiento no realizado</span>
+    </div>
+</div>
+        </section>
+        <section>
+            <table id="maintenanceTable">
+                <thead>
+                    <tr>
+                        <th>Máquina</th>
+                        {% if user_role == 'admin' %}
+                        <th>Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        </main>
+    
+    <div id="dateConfirmationModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirmar Fecha de Mantenimiento</h3>
+        <p>El mantenimiento para la máquina <strong id="modalMachineName"></strong>. ¿Es esta la fecha correcta?</p>
+        <div class="input-group">
+            <label for="completionDateInput">Fecha de finalización:</label>
+            <input type="date" id="completionDateInput" class="form-control">
+        </div>
+        <div class="modal-buttons">
+            <button id="confirmDateBtn" class="btn btn-success">Sí, confirmar</button>
+            <button id="cancelDateBtn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+    
+    <div id="deleteConfirmationModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirmar Eliminación</h3>
+            <p>¿Estás seguro de eliminar <strong id="deleteModalMachineName"></strong> de la tabla?</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="btn btn-primary">Sí, eliminar</button>
+                <button id="cancelDeleteBtn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="indicatorModal" class="modal">
+        <div class="modal-content">
+            <h3>Indicador de Mantenimiento Anual</h3>
+            <div style="width: 100%; max-width: 600px; margin: auto;">
+                <canvas id="maintenanceChart"></canvas>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeIndicatorModalBtn" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="workOrderModal" class="modal">
+    <div class="modal-content" style="max-width: 600px; text-align: left;">
+        <h3>Orden de Trabajo</h3>
+        <p>Para continuar, es necesario rellenar la siguiente información para la orden de trabajo que se realizó.</p>
+
+        <div class="form-section">
+            <div class="input-group">
+                <label for="workOrderDate">Fecha/Hora que se realizó:</label>
+                <input type="datetime-local" id="workOrderDate" class="form-control" readonly>
+            </div>
+            <div class="input-group">
+                <label for="workOrderAssigned">Asignado(a):</label>
+                <input type="text" id="workOrderAssigned" placeholder="Escribe el nombre del asignado" class="form-control" required>
+            </div>
+            <div class="input-group">
+                <label for="workOrderOriginator">Originador:</label>
+                <input type="text" id="workOrderOriginator" placeholder="Escribe el nombre del originador" class="form-control" required>
+            </div>
+            <div class="input-group">
+                <label for="workOrderAreaMachine">Área/Máquina:</label>
+                <input type="text" id="workOrderAreaMachine" class="form-control" readonly>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="input-group">
+                <label for="workOrderType">Tipo:</label>
+                <select id="workOrderType" class="form-control">
+                    <option value="">Selecciona una opción</option>
+                    <option value="Correctivo">Correctivo</option>
+                    <option value="Preventivo">Preventivo</option>
+                    <option value="Especial">Especial</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="workOrderPriority">Prioridad:</label>
+                <select id="workOrderPriority" class="form-control">
+                    <option value="">Selecciona una opción</option>
+                    <option value="Urgente">Urgente</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Planeado">Planeado</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="workOrderArea">Área:</label>
+                <select id="workOrderArea" class="form-control">
+                    <option value="">Selecciona una opción</option>
+                    <option value="Mecánica">Mecánica</option>
+                    <option value="Eléctrica">Eléctrica</option>
+                    <option value="Otra definir">Otra definir</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label for="workOrderFailure">Falla / Requerimiento:</label>
+                <textarea id="workOrderFailure" rows="4" placeholder="Describe la falla o requerimiento" class="form-control" required></textarea>
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label for="workOrderAnalysis">Análisis de falla:</label>
+                <textarea id="workOrderAnalysis" rows="4" placeholder="Describe el análisis de la falla" class="form-control" required></textarea>
+            </div>
+        </div>
+
+        <div class="modal-buttons">
+            <button id="confirmWorkOrderBtn" class="btn btn-success">Confirmar e Imprimir</button>
+            <button id="cancelWorkOrderBtn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div id="viewWorkOrderModal" class="modal">
+    <div class="modal-content">
+        <h3>Ver Orden de Trabajo</h3>
+        <p>¿Deseas ver la orden de trabajo que se imprimió para la máquina <strong id="viewWorkOrderMachineName"></strong>?</p>
+        <div class="modal-buttons">
+            <button id="viewWorkOrderBtn" class="btn btn-primary">Sí, ver orden</button>
+            <button id="cancelViewWorkOrderBtn" class="btn btn-secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+    
+    <div id="toastContainer"></div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
+    <script>
+        const USER_ROLE = "{{user_role}}";
+        // Mapping weeks to months for the display logic
+        const weeksPerMonth = {
+            'Enero': 4, 'Febrero': 4, 'Marzo': 5, 'Abril': 4, 'Mayo': 5, 'Junio': 4,
+            'Julio': 4, 'Agosto': 5, 'Septiembre': 4, 'Octubre': 4, 'Noviembre': 5, 'Diciembre': 4
+        };
+        const monthNames = Object.keys(weeksPerMonth);
+        const totalWeeks = 52;
+
+        const state = {
+            maintenanceRecords: [],
+            selectedCellData: null,
+            selectedRecordId: null,
+            draggedRow: null
+        };
+
+        const domElements = {
+            machineNameInput: document.getElementById('machineNameInput'),
+            maintenanceRecurrenceInput: document.getElementById('maintenanceRecurrenceInput'),
+            maintenanceMonthSelect: document.getElementById('maintenanceMonthSelect'),
+            maintenanceWeekSelect: document.getElementById('maintenanceWeekSelect'),
+            saveButton: document.getElementById('saveButton'),
+            maintenanceTable: document.getElementById('maintenanceTable'),
+            totalsTable: document.getElementById('totalsTable'),
+            indicatorModal: document.getElementById('indicatorModal'),
+            closeIndicatorModalBtn: document.getElementById('closeIndicatorModalBtn'),
+            maintenanceChart: document.getElementById('maintenanceChart'),
+            dateConfirmationModal: document.getElementById('dateConfirmationModal'),
+            modalMachineName: document.getElementById('modalMachineName'),
+            modalDate: document.getElementById('modalDate'),
+            confirmDateBtn: document.getElementById('confirmDateBtn'),
+            cancelDateBtn: document.getElementById('cancelDateBtn'),
+            toastContainer: document.querySelector('.toast-container'),
+            deleteConfirmationModal: document.getElementById('deleteConfirmationModal'),
+            deleteModalMachineName: document.getElementById('deleteModalMachineName'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            completionDateInput: document.getElementById('completionDateInput'),
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+            workOrderModal: document.getElementById('workOrderModal'),
+            workOrderDate: document.getElementById('workOrderDate'),
+            workOrderOriginator: document.getElementById('workOrderOriginator'),
+            workOrderAreaMachine: document.getElementById('workOrderAreaMachine'),
+            workOrderAssigned: document.getElementById('workOrderAssigned'),
+            workOrderType: document.getElementById('workOrderType'),
+            workOrderPriority: document.getElementById('workOrderPriority'),
+            workOrderArea: document.getElementById('workOrderArea'),
+            workOrderFailure: document.getElementById('workOrderFailure'),
+            workOrderAnalysis: document.getElementById('workOrderAnalysis'),
+            confirmWorkOrderBtn: document.getElementById('confirmWorkOrderBtn'),
+            cancelWorkOrderBtn: document.getElementById('cancelWorkOrderBtn'),
+            viewWorkOrderModal: document.getElementById('viewWorkOrderModal'),
+            viewWorkOrderMachineName: document.getElementById('viewWorkOrderMachineName'),
+            viewWorkOrderBtn: document.getElementById('viewWorkOrderBtn'),
+            cancelViewWorkOrderBtn: document.getElementById('cancelViewWorkOrderBtn')
+            
+        };
+
+        function getYearNumber(d) {
+            return d.getFullYear();
+        }
+        
+        // --- Data Persistence with Flask API ---
+        async function getMaintenanceRecords() {
+            try {
+                // Obtiene el año actual
+                const currentYear = getYearNumber(new Date());
+                
+                // Hace la petición a una nueva ruta de API filtrada por año
+                // Ejemplo de ruta solicitada: /api/mantenimiento/2025
+                const response = await fetch(`/api/mantenimiento/${currentYear}`); 
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                // Sort records by `order_index` if it exists
+                if (data.length > 0 && 'order_index' in data[0]) {
+                    data.sort((a, b) => a.order_index - b.order_index);
+                }
+                return data;
+            } catch (error) {
+                showToast('Error fetching records: ' + error.message, 'error');
+                return [];
+            }
+        }
+        
+
+        
+        async function saveMaintenanceRecord(record) {
+            try {
+                const response = await fetch('/api/mantenimiento/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(record)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Error al guardar registro');
+                }
+                return result;
+            } catch (error) {
+                showToast('Error al guardar registro: ' + error.message, 'error');
+                return null;
+            }
+        }
+        
+        async function deleteMaintenanceRecord(recordId) {
+            try {
+                const response = await fetch(`/api/mantenimiento/delete/${recordId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recordId: recordId })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Error deleting record');
+                }
+                showToast(result.message, 'success');
+                return true;
+            } catch (error) {
+                showToast('Error deleting record: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        async function updateMaintenanceStatus(machineId, month, week, newStatus, newDate) {
+            try {
+                const response = await fetch('/api/mantenimiento/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ machineId, month, week, newStatus, newDate })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Error updating status');
+                }
+                showToast(result.message, 'success');
+                return result;
+            } catch (error) {
+                showToast('Error updating status: ' + error.message, 'error');
+                return null;
+            }
+        }
+        
+        // New function to save the new order
+        async function saveNewOrder(newOrder) {
+            try {
+                const response = await fetch('/api/mantenimiento/reorder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newOrder)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.message || 'Error saving new order');
+                }
+                showToast('Orden de máquinas guardada correctamente.', 'success');
+            } catch (error) {
+                showToast('Error saving order: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadData() {
+            try {
+                // Llama a la función de obtención que ya aplica el filtro del año actual
+                const records = await getMaintenanceRecords(); 
+                
+                state.maintenanceRecords = records;
+                renderMaintenanceTable();
+            } catch (error) {
+                showToast('Error al cargar los datos: ' + error.message, 'error');
+            }
+        }
+
+
+        function filterMaintenanceTable() {
+            const input = document.getElementById("searchMachineInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("maintenanceTable");
+            const tr = table.getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName("td")[0];
+                if (td) {
+                    const textValue = td.textContent || td.innerText;
+                    if (textValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        document.getElementById("searchMachineInput").addEventListener("keyup", filterMaintenanceTable);
+
+        // --- UI Functions ---
+        // Función para mostrar un mensaje tipo toast con animación
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.classList.add('toast', type);
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            // Usa setTimeout para dar tiempo al navegador para aplicar los estilos antes de la animación
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Eliminar el toast después de 5 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                
+                // Espera a que la animación de salida termine para eliminar el elemento del DOM
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                }, { once: true });
+            }, 5000);
+        }
+
+
+        function renderMaintenanceTable() {
+            const maintenanceTable = domElements.maintenanceTable;
+            const tableBody = maintenanceTable.querySelector('tbody');
+            const tableHead = maintenanceTable.querySelector('thead');
+            const canAdminister = USER_ROLE !== 'employee'; 
+
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            const monthHeaderRow = document.createElement('tr');
+            monthHeaderRow.innerHTML = '<th>Máquina</th>';
+            
+            const weekHeaderRow = document.createElement('tr');
+            weekHeaderRow.innerHTML = '<th>Semanas</th>';
+            
+            let weekCounter = 1;
+            monthNames.forEach(month => {
+                const weeksInMonth = weeksPerMonth[month];
+                const monthTh = document.createElement('th');
+                monthTh.textContent = month;
+                monthTh.colSpan = weeksInMonth;
+                monthHeaderRow.appendChild(monthTh);
+                for (let i = 1; i <= weeksInMonth; i++) {
+                    const weekTh = document.createElement('th');
+                    weekTh.textContent = weekCounter + i -1;
+                    weekHeaderRow.appendChild(weekTh);
+                }
+                weekCounter += weeksInMonth;
+            });
+
+            if(canAdminister){
+            const actionsTh = document.createElement('th');
+            actionsTh.textContent = 'Acciones';
+            actionsTh.rowSpan = 2;
+            actionsTh.style.verticalAlign = 'middle';
+            monthHeaderRow.appendChild(actionsTh);
+            }
+            tableHead.appendChild(monthHeaderRow);
+            tableHead.appendChild(weekHeaderRow);
+            
+            state.maintenanceRecords.forEach(record => {
+                const row = document.createElement('tr');
+                row.setAttribute('draggable', canAdminister ? 'true' : 'false'); // Make the row draggable
+                row.dataset.id = record.id;
+                
+                const machineCell = document.createElement('td');
+                machineCell.textContent = record.machine_name;
+                row.appendChild(machineCell);
+                
+                let weekNumber = 1;
+                monthNames.forEach(month => {
+                    const weeksInMonth = weeksPerMonth[month];
+                    for (let i = 1; i <= weeksInMonth; i++) {
+                        const cell = document.createElement('td');
+                        const status = record.status[`${month}-${i}`];
+                        if (status) {
+                            const symbolSpan = document.createElement('span');
+                            symbolSpan.className = 'maintenance-status-symbol';
+                            if (status.status === 'done') {
+                                symbolSpan.textContent = '✔';
+                                symbolSpan.className += ' status-check';
+                                symbolSpan.dataset.status = 'done';
+                                symbolSpan.dataset.date = status.date;
+                            } else if (status.status === 'in_progress') {
+                                symbolSpan.textContent = '●';
+                                symbolSpan.className += ' status-circle';
+                                symbolSpan.dataset.status = 'in_progress';
+                                symbolSpan.dataset.date = status.date;
+                            } else if (status.status === 'not_done') {
+                                symbolSpan.textContent = '✖';
+                                symbolSpan.className += ' status-cross';
+                                symbolSpan.dataset.status = 'not_done';
+                                symbolSpan.dataset.date = status.date;
+                            }
+                            symbolSpan.dataset.machineId = record.id;
+                            symbolSpan.dataset.month = month;
+                            symbolSpan.dataset.week = i;
+                            cell.appendChild(symbolSpan);
+                        }
+                        row.appendChild(cell);
+                    }
+                });
+                
+                const actionsCell = document.createElement('td');
+                actionsCell.innerHTML = `
+                ${USER_ROLE !== 'employee' ? 
+                `<button class="btn btn-secondary btn-delete" data-id="${record.id}">Borrar</button>`
+                :
+                ''
+            }
+                `;
+                row.appendChild(actionsCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // En tu archivo mantenimento.html, en la sección <script>
+
+        function checkMachineExists(machineName) {
+            // Revisa si existe algún registro con el nombre de la máquina
+            return state.maintenanceRecords.some(record => record.machine_name === machineName);
+        }
+
+        // En tu archivo mantenimento.html, en la sección <script>
+// Agrega este nuevo event listener
+domElements.machineNameInput.addEventListener('input', () => {
+    const machineName = domElements.machineNameInput.value.trim();
+    if (machineName) {
+        if (checkMachineExists(machineName)) {
+            // Si la máquina ya existe, cambia el texto del botón
+            domElements.saveButton.textContent = 'Actualizar registro';
+        } else {
+            // Si la máquina es nueva, el botón se queda como 'Guardar'
+            domElements.saveButton.textContent = 'Guardar registro';
+        }
+    } else {
+        // Si el campo está vacío, el botón también debe decir 'Guardar'
+        domElements.saveButton.textContent = 'Guardar registro';
+    }
+});
+        
+        // --- Drag-and-Drop Event Listeners ---
+        domElements.maintenanceTable.addEventListener('dragstart', (e) => {
+            const row = e.target.closest('tr');
+            if (row && row.dataset.id) {
+                state.draggedRow = row;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', row.dataset.id);
+                row.classList.add('dragging');
+            }
+        });
+
+        domElements.maintenanceTable.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const targetRow = e.target.closest('tr');
+            if (targetRow && targetRow.dataset.id) {
+                const boundingBox = targetRow.getBoundingClientRect();
+                const offset = boundingBox.y + (boundingBox.height / 2);
+                if (e.clientY > offset) {
+                    targetRow.style.borderBottom = '2px solid #007bff';
+                    targetRow.style.borderTop = '';
+                } else {
+                    targetRow.style.borderTop = '2px solid #007bff';
+                    targetRow.style.borderBottom = '';
+                }
+            }
+        });
+
+        domElements.maintenanceTable.addEventListener('dragleave', (e) => {
+            const targetRow = e.target.closest('tr');
+            if (targetRow) {
+                targetRow.style.borderTop = '';
+                targetRow.style.borderBottom = '';
+            }
+        });
+
+        domElements.maintenanceTable.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text/plain');
+            const targetRow = e.target.closest('tr');
+            
+            if (state.draggedRow && targetRow && state.draggedRow !== targetRow) {
+                const targetId = targetRow.dataset.id;
+                const draggedIndex = state.maintenanceRecords.findIndex(rec => rec.id == draggedId);
+                const targetIndex = state.maintenanceRecords.findIndex(rec => rec.id == targetId);
+
+                if (draggedIndex !== -1 && targetIndex !== -1) {
+                    // Update the array order
+                    const [removed] = state.maintenanceRecords.splice(draggedIndex, 1);
+                    state.maintenanceRecords.splice(targetIndex, 0, removed);
+                    
+                    // Update `order_index` in the array
+                    const newOrder = state.maintenanceRecords.map((rec, index) => ({
+                        id: rec.id,
+                        order_index: index
+                    }));
+
+                    await saveNewOrder(newOrder);
+                    renderMaintenanceTable();
+                }
+            }
+            // Clear styles
+            const allRows = domElements.maintenanceTable.querySelectorAll('tbody tr');
+            allRows.forEach(row => {
+                row.style.borderTop = '';
+                row.style.borderBottom = '';
+                row.classList.remove('dragging');
+            });
+        });
+
+        // --- Other Event Listeners ---
+        domElements.saveButton.addEventListener('click', async () => {
+    const machineName = domElements.machineNameInput.value.trim();
+    const recurrence = parseInt(domElements.maintenanceRecurrenceInput.value, 10);
+    const startMonth = domElements.maintenanceMonthSelect.value;
+    const week = domElements.maintenanceWeekSelect.value;
+
+    if (!machineName || !startMonth || !week || isNaN(recurrence) || recurrence < 1) {
+        showToast("Por favor, completa todos los campos con valores válidos.", 'error');
+        return;
+    }
+
+    const startMonthIndex = monthNames.indexOf(startMonth);
+    const monthsToSave = [];
+
+    // Prepara los meses para guardar
+    for (let i = startMonthIndex; i < monthNames.length; i += recurrence) {
+        monthsToSave.push(monthNames[i]);
+    }
+    
+    let allRecordsSaved = true;
+    for (const month of monthsToSave) {
+        const newStatus = {};
+        newStatus[`${month}-${week}`] = { status: 'in_progress', date: '' };
+        
+        const record = {
+            machineName: machineName,
+            weekNumber: parseInt(week),
+            status: newStatus
+        };
+        
+        const savedRecord = await saveMaintenanceRecord(record);
+        if (!savedRecord) {
+            allRecordsSaved = false;
+            break;
+        }
+        if (savedRecord.message === 'Record updated successfully!') {
+            anyRecordUpdated = true;
+        }
+
+    }
+
+    // Si todos los registros se guardaron, actualiza la tabla y limpia el formulario
+    if (allRecordsSaved) {
+        // Muestra el mensaje correcto dependiendo de si se actualizó o no
+        if (anyRecordUpdated) {
+            showToast('Datos actualizados', 'success');
+        } else {
+            showToast('¡Registro guardado con éxito!', 'success');
+        }
+        
+        loadData(); // Recarga los datos y renderiza la tabla
+        
+        // Limpia el formulario
+        domElements.machineNameInput.value = '';
+        domElements.maintenanceRecurrenceInput.value = '1';
+        domElements.maintenanceMonthSelect.value = '';
+        domElements.maintenanceWeekSelect.innerHTML = '<option value="">Selecciona una semana</option>';
+
+        domElements.saveButton.textContent = 'Guardar registro';
+
+    }
+
+});
+
+        domElements.maintenanceTable.addEventListener('click', async (event) => {
+            const target = event.target;
+            
+            if (target.classList.contains('btn-delete')) {
+                const recordId = target.dataset.id;
+                state.selectedRecordId = recordId;
+                const recordToDelete = state.maintenanceRecords.find(rec => rec.id == recordId);
+                if (recordToDelete) {
+                    domElements.deleteModalMachineName.textContent = recordToDelete.machine_name;
+                    openModal(domElements.deleteConfirmationModal);
+                }
+                return;
+            }
+            
+            const symbol = event.target.closest('.maintenance-status-symbol');
+            if (symbol) {
+                state.selectedCellData = {
+                    machineId: symbol.dataset.machineId,
+                    machineName: state.maintenanceRecords.find(rec => rec.id == symbol.dataset.machineId).machine_name,
+                    month: symbol.dataset.month,
+                    week: symbol.dataset.week,
+                    currentStatus: symbol.dataset.status
+                };
+                
+                if (state.selectedCellData.currentStatus === 'done') {
+                    domElements.viewWorkOrderMachineName.textContent = state.selectedCellData.machineName;
+                    openModal(domElements.viewWorkOrderModal);
+                } else if (state.selectedCellData.currentStatus !== 'done') {
+                    const today = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+                    domElements.modalMachineName.textContent = state.selectedCellData.machineName;
+                    domElements.completionDateInput.value = new Date().toISOString().split('T')[0];
+                    openModal(domElements.dateConfirmationModal);
+                } else {
+                    showToast('Este mantenimiento ya ha sido completado.', 'info');
+                }
+            }
+        });
+
+        domElements.confirmDeleteBtn.addEventListener('click', async () => {
+            const recordId = state.selectedRecordId;
+            const success = await deleteMaintenanceRecord(recordId);
+            if (success) {
+                loadData();
+            }
+            closeModal(domElements.deleteConfirmationModal);
+        });
+
+        domElements.cancelDeleteBtn.addEventListener('click', () => {
+            closeModal(domElements.deleteConfirmationModal);
+        });
+        
+        domElements.confirmDateBtn.addEventListener('click', async () => {
+            const completionDate = domElements.completionDateInput.value;
+            if (!completionDate) {
+                showToast('Por favor, selecciona una fecha de finalización.', 'error');
+                return;
+            }
+
+            const { machineName } = state.selectedCellData;
+            
+            const now = new Date();
+            const formattedDate = new Date(`${completionDate}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+
+            domElements.dateConfirmationModal.classList.remove('show');
+
+            domElements.workOrderModal.classList.add('show');
+            const year = formattedDate.getFullYear();
+const month = String(formattedDate.getMonth() + 1).padStart(2, '0');
+const day = String(formattedDate.getDate()).padStart(2, '0');
+const hours = String(formattedDate.getHours()).padStart(2, '0');
+const minutes = String(formattedDate.getMinutes()).padStart(2, '0');
+            
+domElements.workOrderDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            domElements.workOrderAreaMachine.value = machineName;
+        });
+
+        domElements.cancelDateBtn.addEventListener('click', () => {
+            closeModal(domElements.dateConfirmationModal);
+        });
+
+        domElements.maintenanceMonthSelect.addEventListener('change', (event) => {
+            const selectedMonth = event.target.value;
+            const weekSelect = domElements.maintenanceWeekSelect;
+            weekSelect.innerHTML = '<option value="">Selecciona una semana</option>';
+            if (selectedMonth) {
+                const weeks = weeksPerMonth[selectedMonth];
+                for (let i = 1; i <= weeks; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Semana ${i}`;
+                    weekSelect.appendChild(option);
+                }
+            }
+        });
+
+        // Modal functions
+        function openModal(modalElement) {
+            if (modalElement) {
+                modalElement.style.display = 'flex';
+                void modalElement.offsetWidth;
+                modalElement.classList.add('show');
+            }
+        }
+        function closeModal(modalElement) {
+            if (modalElement) {
+                modalElement.classList.remove('show');
+                setTimeout(() => {
+                    modalElement.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        domElements.confirmWorkOrderBtn.addEventListener('click', async () => {
+            const workOrderData = {
+                date: domElements.workOrderDate.value,
+                originator: domElements.workOrderOriginator.value.trim(),
+                areaMachine: domElements.workOrderAreaMachine.value,
+                assigned: domElements.workOrderAssigned.value.trim(),
+                type: domElements.workOrderType.value,
+                priority: domElements.workOrderPriority.value,
+                area: domElements.workOrderArea.value,
+                failure: domElements.workOrderFailure.value.trim(),
+                analysis: domElements.workOrderAnalysis.value.trim()
+            };
+
+            if (!workOrderData.originator || !workOrderData.assigned || !workOrderData.type || !workOrderData.priority || !workOrderData.area || !workOrderData.failure || !workOrderData.analysis) {
+                showToast('Por favor, llene la orden de trabajo', 'error');
+                return;
+            }
+
+            const { machineId, month, week } = state.selectedCellData;
+            const completionDate = workOrderData.date;
+
+            const updateSuccess = await updateMaintenanceStatus(machineId, month, week, 'done', completionDate);
+
+            if (updateSuccess) {
+                localStorage.setItem(`workOrder-${machineId}-${month}-${week}`, JSON.stringify(workOrderData));
+                localStorage.setItem('workOrderData', JSON.stringify(workOrderData));
+
+                loadData();
+
+                window.open('orden_de_trabajo', '_blank');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+                domElements.workOrderModal.classList.remove('show');
+                showToast('Orden de trabajo generada. Revisa la nueva pestaña para imprimir.', 'success');
+            }
+        });
+
+        domElements.cancelWorkOrderBtn.addEventListener('click', () => {
+            domElements.workOrderModal.classList.remove('show');
+            showToast('Creación de orden de trabajo cancelada.', 'info');
+        });
+
+        domElements.viewWorkOrderBtn.addEventListener('click', () => {
+            const { machineId, month, week } = state.selectedCellData;
+            const workOrderData = JSON.parse(localStorage.getItem(`workOrder-${machineId}-${month}-${week}`));
+            if (workOrderData) {
+                localStorage.setItem('workOrderData', JSON.stringify(workOrderData));
+                window.open('orden_de_trabajo', '_blank');
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+                closeModal(domElements.viewWorkOrderModal);
+            } else {
+                showToast('No se encontró una orden de trabajo para este mantenimiento.', 'error');
+                closeModal(domElements.viewWorkOrderModal);
+            }
+        });
+
+        domElements.cancelViewWorkOrderBtn.addEventListener('click', () => {
+            closeModal(domElements.viewWorkOrderModal);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileToggle = document.querySelector('.profile-toggle');
+            const profileContainer = document.querySelector('.profile-menu-container-top-right');
+            const profileMenu = document.querySelector('.profile-dropdown-menu');
+
+            if (profileToggle && profileMenu && profileContainer) {
+                profileToggle.addEventListener('click', () => {
+                    // Oculta/Muestra el menú usando la clase 'hidden'
+                    profileMenu.classList.toggle('hidden'); 
+                    // Añade/Remueve la clase 'active' para girar el icono de la flecha
+                    profileContainer.classList.toggle('active');
+                });
+            }
+            document.addEventListener('click', (event) => {
+                const profileContainer = document.querySelector('.profile-menu-container-top-right');
+                const isClickInsideContainer = event.target.closest('.profile-menu-container-top-right');
+                
+                if (!profileMenu.classList.contains('hidden') && !isClickInsideContainer) {
+                    profileMenu.classList.add('hidden');
+                    if (profileContainer) {
+                        profileContainer.classList.remove('active'); // Asegura que la flecha vuelva a subir
+                    }
+                }
+            });
+        });
+        
+
+        // Initial data load when the page is ready
+        window.onload = loadData;
+    </script>
+</body>
+</html>
